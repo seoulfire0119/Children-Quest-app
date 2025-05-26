@@ -29,7 +29,8 @@ export default function QuestList() {
       (err) => console.warn("QuestList snapshot error:", err)
     );
     return () => unsub();
-  }, [auth.currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const completeQuest = async (id) => {
     await updateDoc(doc(db, "quests", id), {

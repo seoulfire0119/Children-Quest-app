@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
+import { db } from "../firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { Card, Spinner } from "react-bootstrap";
 

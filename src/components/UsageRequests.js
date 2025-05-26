@@ -1,4 +1,3 @@
-// src/components/UsageRequests.js
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import {
@@ -35,7 +34,6 @@ export default function UsageRequests() {
         const list = await Promise.all(
           snap.docs.map(async (d) => {
             const data = d.data();
-            // 자녀 이름 조회
             const cSnap = await getDoc(doc(db, "users", data.childUid));
             const childName = cSnap.exists() ? cSnap.data().name : "알 수 없음";
             return {
@@ -55,21 +53,18 @@ export default function UsageRequests() {
       }
     );
     return () => unsub();
-  }, [auth.currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handle = async (id, childUid, approve) => {
-    // 사용 요청 문서 참조
     const rRef = doc(db, "usageRequests", id);
 
     if (approve) {
-      // 승인
       await updateDoc(rRef, { status: "approved" });
     } else {
-      // 거절: 요청 문서 삭제 + transaction rollback
       const rSnap = await getDoc(rRef);
       if (rSnap.exists()) {
         const txId = rSnap.data().transactionId;
-        // 트랜잭션 used 필드 되돌리기
         const txRef = doc(db, "transactions", childUid, "history", txId);
         await updateDoc(txRef, { used: false });
       }
