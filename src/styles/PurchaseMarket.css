@@ -1,0 +1,105 @@
+/* ┌──────────────────────────────┐
+   │  PurchaseMarket.css  (정리본) │
+   └──────────────────────────────┘ */
+
+/* ========== 1. 공통 레이아웃 ========== */
+.market-grid {
+  display: grid;
+
+  /* 열(트랙) 규칙
+     - 최소 140 px 보다 작아지지 않고
+     - 남는 공간이 있으면 모든 열이 똑같이 넓어지며
+     - 뷰포트가 좁아지면 열 개수가 자동 감소 */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+
+  gap: 0.6rem;
+  justify-content: center;   /* 마지막 줄을 가운데 정렬 */
+}
+
+/* 카드 자체 넓이가 늘어나다 못해 너무 커지는 게 싫다면 +α */
+.market-card {
+  max-width: 180px;          /* 열이 커져도 180 px 이상은 확장 금지 */
+}
+
+/* ========== 2. 인벤토리 ========== */
+.inventory-toggle {
+  font-weight: 600;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-main);
+  color: var(--text-main);
+  border: none;
+}
+.inventory-toggle:hover { background: var(--bg-hover); }
+
+.inventory-card {
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-line);
+}
+.inventory-card .item-name {
+  flex: 1;
+  margin-right: 0.5rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: normal;  /* 두 줄까지 허용 */
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+}
+.inventory-card .parent-select {
+  min-width: 6.5rem;    /* 여유 폭 */
+  margin-right: 0.5rem;
+}
+.inventory-card button {
+  margin-left: auto;    /* 오른쪽 끝 */
+  flex-shrink: 0;
+}
+
+
+
+/* ========== 3. 마켓 카드 ========== */
+.market-card {
+  min-height: 80px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px solid var(--card-line);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.market-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  background: var(--bg-hover);
+}
+.market-card .item-name {
+  font-weight: 400;
+  font-size: 1.5rem;
+  max-width: 100%;
+  white-space: normal;   /* 줄바꿈 허용 */
+  overflow: visible;
+  text-overflow: clip;
+}
+.market-card .item-price {
+  margin-top: 0.25rem;
+  font-size: 1.25rem;
+  color: var(--bg-main);
+  font-weight: 700;
+}
+
+/* 부트스트랩 버튼이 카드 내부에 남아 있을 경우 숨김 */
+.market-card .btn { display: none; }
+

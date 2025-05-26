@@ -1,0 +1,68 @@
+import React, { useState } from "react";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, auth, storage } from "../firebase";
+import { Form, Button } from "react-bootstrap";
+
+export default function AddQuest({ selectedChild }) {
+  const [title, setTitle] = useState("");
+  const [reward, setReward] = useState("");
+  const [photo, setPhoto] = useState(null);
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    if (!title) return alert("제목을 입력하세요!");
+    if (!reward) return alert("보상을 입력하세요!");
+    if (!selectedChild) return alert("퀘스트를 받을 아이를 선택하세요!");
+
+    let photoUrl = "";
+    if (photo) {
+      const storageRef = ref(
+        storage,
+        `questPhotos/${auth.currentUser.uid}/${Date.now()}.jpg`
+      );
+      await uploadBytes(storageRef, photo);
+      photoUrl = await getDownloadURL(storageRef);
+    }
+
+    await addDoc(collection(db, "quests"), {
+      title,
+      reward,
+      photoUrl,
+      createdBy: auth.currentUser.uid,
+      assignedTo: selectedChild,
+      createdAt: Timestamp.now(),
+      completed: false,
+      revisionRequested: false,
+    });
+
+    setTitle("");
+    setReward("");
+    setPhoto(null);
+    alert("퀘스트가 생성되었습니다!");
+  };
+
+  return (
+    <Form onSubmit={handleAdd} className="my-3">
+      <Form.Control
+        className="mb-2"
+        placeholder="퀘스트 제목"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <Form.Control
+        className="mb-2"
+        placeholder="보상 (예: 게임 30분)"
+        value={reward}
+        onChange={(e) => setReward(e.target.value)}
+      />
+      <Form.Control
+        type="file"
+        accept="image/*"
+        className="mb-3"
+        onChange={(e) => setPhoto(e.target.files[0])}
+      />
+      <Button type="submit">추가</Button>
+    </Form>
+  );
+}

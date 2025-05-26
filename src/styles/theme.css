@@ -1,0 +1,184 @@
+/* =========================================
+   🎨  COLOR PALETTE  (한 곳만 바꾸면 전체 톤 변경)
+   ========================================= */
+:root {
+  --bg-main:        #ffc83d;        /* 메인 노랑-주황              */
+  --bg-hover:       #ffd970;        /* hover·연한 노랑             */
+  --text-main:      #000000;        /* 기본 글씨색                 */
+
+  --card-bg:        #ffffff;        /* 카드·인풋 배경             */
+  --card-line:      rgba(0,0,0,.15);/* 카드 테두리                */
+
+  --btn-accent:     #0046ff;        /* 파란(‘사용하기’)           */
+  --btn-accent-txt: #ffffff;
+}
+
+/* =========================================
+   📐  COMMON LAYOUT
+   ========================================= */
+body               { background:var(--bg-main); color:var(--text-main); }
+.card,
+.form-select,
+.form-control      { background:var(--card-bg); border-color:var(--card-line); }
+h1,h2,h3,h4,h5,h6  { color:var(--text-main); }
+
+/* 노란 대시보드 박스 */
+.dashboard-wrap    { background:var(--bg-main); border-radius:.75rem; padding:1rem 1.25rem; }
+/* 흰색 섹션 카드 */
+.section-card      { background:var(--card-bg); border:1px solid var(--card-line);
+                     border-radius:.75rem; padding:.75rem 1rem; margin-bottom:1rem; }
+
+/* Bootstrap 기본 text-warning → 검정으로 재정의 */
+.text-warning      { color:#000 !important; }
+
+/* =========================
+     BUTTONS
+   ========================= */
+.btn-warning,
+.inventory-toggle  { background:var(--bg-main); color:var(--text-main); border:none; }
+.btn-warning:hover,
+.inventory-toggle:hover { background:var(--bg-hover); }
+
+.btn-primary,
+.btn-accent,
+.inventory-card button {
+  background:var(--btn-accent); color:var(--btn-accent-txt); border:none;
+  transition:filter .1s ease;
+}
+.btn-primary:hover,
+.btn-accent:hover,
+.inventory-card button:hover { filter:brightness(.9); }
+
+/* 스피너 · 구분선 */
+.spinner-border    { color:var(--btn-accent); }
+hr                 { border-top:1px solid var(--bg-hover); }
+
+/* 포인트마켓 단일 탭 100 % 폭 */
+.single-tab.nav-tabs .nav-item { flex:1 1 100%; }
+.single-tab.nav-tabs .nav-link { width:100%; }
+
+/* =========================================
+   🗂️  TWO-ROW TABS  (2 × 2 레이아웃용)
+   ========================================= */
+/* ① 레이아웃을 flex → grid 로 고정 */
+.two-row-tabs               { display:grid !important;
+                              grid-template-columns:1fr 1fr;
+                              grid-template-rows:auto auto;
+                              gap:0; border:none; }
+
+/* ② li 폭: 50 %, ul 내부 간격 0 */
+.two-row-tabs .nav-item     { width:100%; margin:0; }
+
+/* ③ 탭 버튼 기본 • 내부 경계 */
+.two-row-tabs .nav-link     { width:100%; padding:.55rem 0; margin:0;
+                              border:1px solid var(--card-line); border-radius:0;
+                              background:var(--card-bg); color:var(--text-main);
+                              text-align:center; }
+
+/* ④ 외곽 네 모서리 둥글게 */
+.two-row-tabs .nav-item:nth-child(1) .nav-link { border-top-left-radius:.6rem; }
+.two-row-tabs .nav-item:nth-child(2) .nav-link { border-top-right-radius:.6rem; }
+.two-row-tabs .nav-item:nth-child(3) .nav-link { border-bottom-left-radius:.6rem; }
+.two-row-tabs .nav-item:nth-child(4) .nav-link { border-bottom-right-radius:.6rem; }
+
+/* ⑤ 색상 – hover / active */
+.two-row-tabs .nav-link:not(.active):hover {
+  background:var(--bg-hover); border-color:var(--bg-hover);
+}
+.two-row-tabs .nav-link.active {
+  background:red;  border-color:var(--bg-main); font-weight:700;
+}
+
+.text-warning{color:#070706!important;}
+
+.row {--bs-gutter-x: 0;}
+
+#market-tab {background-color: #ffffff;}
+
+/* 네 번째 <div> 안에 있는 첫 번째 버튼 */
+div:nth-of-type(4) > div > button:nth-of-type(1) {
+  background: #ffffff !important;   /* 흰 배경 */
+  color: #000;                      /* 글씨색(필요하면) */
+  border-color: transparent;        /* 테두리 제거(선택) */
+}
+
+/* 네 번째 <div> 안에 있는 두 번째 버튼 */
+div:nth-of-type(4) > div > button:nth-of-type(2) {
+  background: #ffffff !important;
+  color: #000;
+  border-color: transparent;
+}
+
+/* 포인트 마켓( single-tab )이 선택된 상태 → 빨간 배경 */
+.single-tab .nav-link.active {
+  background: #FF3B30;   /* iOS 레드 계열 예시  (#ff0000 가능) */
+  color: #fff !important;
+}
+
+/* ▣ 포인트 마켓 단일 탭: 흰색 테두리 제거 */
+.single-tab.nav-tabs {               /* ul 요소 */
+  border-bottom: none;               /* 밑줄 제거 */
+}
+
+.single-tab .nav-link {              /* li > a 요소 */
+  border: none !important;           /* 주변 경계선 제거 */
+  box-shadow: none !important;       /* 포커스 테두리 제거 */
+}
+
+/* 모든 로그아웃 버튼 공통 스타일 */
+.logout-btn{
+  background: var(--btn-accent);      /* 파란색 (#0046ff) */
+  color: var(--btn-accent-txt);       /* 흰 글씨 */
+  border: none;
+  transition: filter .1s ease;
+}
+.logout-btn:hover{ filter:brightness(.9); }
+
+/* ▣ 파란 로그아웃 버튼(아이·부모 공통) */
+.logout-btn{
+  background: var(--btn-accent);
+  color: var(--btn-accent-txt);
+  border:none;
+}
+.logout-btn:hover{ filter:brightness(.9); }
+
+/* ▣ 모든 nav-tab 기본 배경 = 흰색 */
+.nav-tabs .nav-link{ background: var(--card-bg); color: var(--text-main); }
+
+/* ▣ 활성(클릭)된 탭은 빨간색, hover 는 연노랑 */
+.nav-tabs .nav-link.active{
+  background:#FF3B30;          /* 빨강 */
+  color:#fff;                  /* 흰 글씨 */
+  border-color:#FF3B30;
+}
+.nav-tabs .nav-link:not(.active):hover{
+  background: var(--bg-hover); /* 연노랑 */
+  border-color: var(--bg-hover);
+}
+
+/* ▣ 탭 내용 영역 배경 = 흰색 + 안쪽 여백 */
+.tab-pane{
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: .5rem;
+}
+
+/* 부모·아이 대시보드 공통: 탭 간격 0.5 rem */
+.nav-tabs .nav-item:not(:last-child) {
+  margin-right: 0.5rem;     /* ↔ 필요에 따라 0.25rem ~ 1rem 로 조정 */
+}
+
+/* ───────── 탭 간격 & 위·아래 여백 ───────── */
+
+/* ① nav-tabs 자체 여백 */
+.nav-tabs{
+  margin-top: .4rem;      /* 탭 위쪽 */
+  margin-bottom: .6rem;   /* 탭 아래쪽 */
+  gap: .5rem;             /* flex-gap: 버튼 사이 간격 (현대 브라우저 지원) */
+}
+
+/* ② gap을 지원하지 않는 구형 브라우저 대비용 – li margin */
+.nav-tabs .nav-item{
+  margin-right: .5rem;    /* 마지막 버튼은 바로 아래가 0으로 덮어쓰여 자동 제거 */
+}
+.nav-tabs .nav-item:last-child{ margin-right: 0; }
