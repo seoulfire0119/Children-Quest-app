@@ -18,17 +18,19 @@ export default function QuestList() {
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
-
+    
     const q = query(
       collection(db, "quests"),
       where("assignedTo", "==", uid),
       where("completed", "==", false)
     );
+    
     const unsub = onSnapshot(
       q,
       (snap) => setQuests(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       (err) => console.warn("QuestList snapshot error:", err)
     );
+    
     return () => unsub();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -39,6 +41,7 @@ export default function QuestList() {
       revisionRequested: false,
       pointsAwarded: true,
     });
+    
     if (!quest.pointsAwarded && quest.points) {
       await updateDoc(doc(db, "users", auth.currentUser.uid), {
         points: increment(quest.points),
@@ -68,7 +71,6 @@ export default function QuestList() {
                   style={{ width: "100%", borderRadius: 6 }}
                 />
               )}
-              <p>보상: {q.reward}</p>
               {typeof q.points === "number" && (
                 <p>포인트: {q.points}점</p>
               )}

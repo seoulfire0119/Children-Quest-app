@@ -20,6 +20,8 @@ import ChildSelector from "./ChildSelector";
 import ChildRoutineStatus from "./ChildRoutineStatus";
 import ChildPoints from "./ChildPoints";
 import UsageRequests from "./UsageRequests";
+import MarketAdmin from "./MarketAdmin";
+import AfterSchoolSchedule from "./AfterSchoolSchedule";
 
 export default function ParentDashboard() {
   /* ───────── 상태 ───────── */
@@ -116,6 +118,16 @@ export default function ParentDashboard() {
           {/* 사용 요청 보기 */}
           <Tab eventKey="usageReq" title="사용 요청 보기">
             <UsageRequests />
+          </Tab>
+
+          {/* 포인트마켓 관리 */}
+          <Tab eventKey="marketAdmin" title="포인트마켓 관리">
+            <MarketAdmin />
+          </Tab>
+
+          {/* 방과후 */}
+          <Tab eventKey="afterSchool" title="방과후">
+            <AfterSchoolSchedule />
           </Tab>
         </Tabs>
       </div>

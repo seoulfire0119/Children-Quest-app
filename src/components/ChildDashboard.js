@@ -8,6 +8,7 @@ import CompletedQuestList from "./CompletedQuestList";
 import RoutineList from "./RoutineList";
 import PurchaseMarket from "./PurchaseMarket";
 import ChildPoints from "./ChildPoints";
+import AfterSchoolSchedule from "./AfterSchoolSchedule";
 
 export default function ChildDashboard() {
   /* ──────────────── 상태 ──────────────── */
@@ -136,6 +137,9 @@ export default function ChildDashboard() {
             </Tab>
             <Tab eventKey="afternoon" title="🌆 하교 후">
               <RoutineList session="afternoon" />
+            </Tab>
+            <Tab eventKey="afterSchool" title="방과후">
+              <AfterSchoolSchedule />
             </Tab>
           </Tabs>
         )}

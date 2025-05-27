@@ -14,7 +14,7 @@ import { Accordion, Button, Badge, Image } from "react-bootstrap";
 
 export default function ParentQuestList() {
   const [quests, setQuests] = useState([]);
-
+  
   useEffect(() => {
     const q = query(
       collection(db, "quests"),

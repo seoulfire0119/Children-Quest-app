@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks.js";
 import { auth, db } from "../firebase";
 import {
   doc,
@@ -11,51 +12,49 @@ import {
 } from "firebase/firestore";
 import { ListGroup, Form, Badge, Spinner } from "react-bootstrap";
 
+const createInitialState = (tasks) => {
+  const obj = {};
+  tasks.forEach((_, i) => {
+    obj[i + 1] = false;
+  });
+  obj.completedCount = 0;
+  obj.awardedSteps = [];
+  return obj;
+};
+
 export default function RoutineList({ session }) {
-  // 1) 할 일 목록
-  const TASKS = useMemo(() => {
-    return session === "morning"
-      ? [
-          "1) 일어나자마자 양치하기",
-          "2) 양치하고 옷 갈아입기",
-          "3) 머리정돈 & 선크림",
-          "4) 물통 챙기기",
-          "5) 방과후 준비물 챙기기 (배드민턴, 태권도)",
-          "6) 핸드폰 챙기기",
-          "7) 티비 보기",
-          "8) 밥(약)먹기",
-          "9) 시간 확인하기",
-          "10) 학교가기",
-        ]
-      : [
-          "1) 손씻기",
-          "2) 물통 싱크대에 넣기",
-          "3) 샤워하기",
-          "4) 벗은 옷 빨래통에 넣기",
-          "5) 독서하기",
-          "6) 독서록 작성하기",
-          "7) 뽀뽀하기",
-          "8) 안마하기",
-          "9) 학교 이야기해주기",
-          "10) 부모님 도와드리기",
-        ];
-  }, [session]);
+  // 1) 할 일 목록 (Firestore에서 사용자 정의 가능)
+  const uid = auth.currentUser?.uid;
+  const [TASKS, setTASKS] = useState(
+    session === "morning"
+      ? DEFAULT_ROUTINE_TASKS.morning
+      : DEFAULT_ROUTINE_TASKS.afternoon
+  );
+
+  useEffect(() => {
+    if (!uid) return;
+    (async () => {
+      try {
+        const configSnap = await getDoc(doc(db, "routines", uid));
+        if (configSnap.exists()) {
+          const data = configSnap.data();
+          setTASKS(
+            session === "morning"
+              ? data.tasks_morning || DEFAULT_ROUTINE_TASKS.morning
+              : data.tasks_afternoon || DEFAULT_ROUTINE_TASKS.afternoon
+          );
+        }
+      } catch (err) {
+        console.error("Load routine config error:", err);
+      }
+    })();
+  }, [uid, session]);
 
   // 2) 초기 상태
-  const initialState = useMemo(() => {
-    const obj = {};
-    TASKS.forEach((_, i) => {
-      obj[i + 1] = false;
-    });
-    obj.completedCount = 0;
-    obj.awardedSteps = [];
-    return obj;
-  }, [TASKS]);
+  const initialState = useMemo(() => createInitialState(TASKS), [TASKS]);
 
   const [steps, setSteps] = useState(initialState);
   const [loading, setLoading] = useState(true);
-
-  const uid = auth.currentUser?.uid;
   const today = new Date().toISOString().split("T")[0];
   const docRef = uid && doc(db, "routines", uid, "daily", today);
 
@@ -69,21 +68,41 @@ export default function RoutineList({ session }) {
     (async () => {
       try {
         const snap = await getDoc(docRef);
+        let data = initialState;
         if (snap.exists()) {
-          const data = snap.data()[session] || initialState;
-          if (isMounted) setSteps(data);
+          const existing = snap.data()[session];
+          if (existing) {
+            data = { ...initialState, ...existing };
+            if (JSON.stringify(existing) !== JSON.stringify(data)) {
+              await updateDoc(docRef, {
+                [session]: data,
+                updatedAt: Timestamp.now(),
+              });
+            }
+          } else {
+            await updateDoc(docRef, {
+              [session]: initialState,
+              updatedAt: Timestamp.now(),
+            });
+          }
         } else {
-          // 문서가 없으면 생성
           await setDoc(
-            doc(db, "routines", uid, "daily", today),
+            docRef,
             {
-              morning: initialState,
-              afternoon: initialState,
+              morning:
+                session === "morning"
+                  ? initialState
+                  : createInitialState(DEFAULT_ROUTINE_TASKS.morning),
+              afternoon:
+                session === "afternoon"
+                  ? initialState
+                  : createInitialState(DEFAULT_ROUTINE_TASKS.afternoon),
               updatedAt: Timestamp.now(),
             },
             { merge: true }
           );
         }
+        if (isMounted) setSteps(data);
       } catch (err) {
         if (err.code !== "permission-denied") {
           console.error("Routine load error:", err);
