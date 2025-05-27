@@ -86,6 +86,9 @@ export default function CompletedQuestList() {
                   />
                 </>
               )}
+              {typeof q.points === "number" && (
+                <p className="mt-2">획득 포인트: {q.points}점</p>
+              )}
               <Button
                 variant="outline-secondary"
                 className="mt-3"

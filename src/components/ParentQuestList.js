@@ -78,6 +78,9 @@ export default function ParentQuestList() {
                   <Image src={q.proofUrl} fluid rounded className="mb-3" />
                 </>
               )}
+              {typeof q.points === "number" && (
+                <p>포인트: {q.points}점</p>
+              )}
               {q.completed && !q.revisionRequested && (
                 <Button
                   variant="outline-danger"
