@@ -6,6 +6,7 @@ import {
   onSnapshot,
   updateDoc,
   doc,
+  increment,
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { Card, Button, Collapse } from "react-bootstrap";
@@ -31,11 +32,17 @@ export default function QuestList() {
     return () => unsub();
   }, [auth.currentUser]);
 
-  const completeQuest = async (id) => {
-    await updateDoc(doc(db, "quests", id), {
+  const completeQuest = async (quest) => {
+    await updateDoc(doc(db, "quests", quest.id), {
       completed: true,
       revisionRequested: false,
+      pointsAwarded: true,
     });
+    if (!quest.pointsAwarded && quest.points) {
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        points: increment(quest.points),
+      });
+    }
   };
 
   if (!auth.currentUser) return null;
@@ -60,8 +67,8 @@ export default function QuestList() {
                   style={{ width: "100%", borderRadius: 6 }}
                 />
               )}
-              <p>보상: {q.reward}</p>
-              <Button variant="success" onClick={() => completeQuest(q.id)}>
+              {typeof q.points === "number" && <p>포인트: {q.points}점</p>}
+              <Button variant="success" onClick={() => completeQuest(q)}>
                 완료
               </Button>
             </Card.Body>

@@ -6,14 +6,15 @@ import { Form, Button } from "react-bootstrap";
 
 export default function AddQuest({ selectedChild }) {
   const [title, setTitle] = useState("");
-  const [reward, setReward] = useState("");
+  const [points, setPoints] = useState(0);
   const [photo, setPhoto] = useState(null);
 
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!title) return alert("제목을 입력하세요!");
-    if (!reward) return alert("보상을 입력하세요!");
     if (!selectedChild) return alert("퀘스트를 받을 아이를 선택하세요!");
+    const pts = Number(points);
+    if (!Number.isFinite(pts) || pts <= 0) return alert("포인트를 입력하세요!");
 
     let photoUrl = "";
     if (photo) {
@@ -27,17 +28,18 @@ export default function AddQuest({ selectedChild }) {
 
     await addDoc(collection(db, "quests"), {
       title,
-      reward,
+      points: pts,
       photoUrl,
       createdBy: auth.currentUser.uid,
       assignedTo: selectedChild,
       createdAt: Timestamp.now(),
       completed: false,
       revisionRequested: false,
+      pointsAwarded: false,
     });
 
     setTitle("");
-    setReward("");
+    setPoints(0);
     setPhoto(null);
     alert("퀘스트가 생성되었습니다!");
   };
@@ -45,16 +47,18 @@ export default function AddQuest({ selectedChild }) {
   return (
     <Form onSubmit={handleAdd} className="my-3">
       <Form.Control
+        type="text"
         className="mb-2"
         placeholder="퀘스트 제목"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
       <Form.Control
+        type="number"
         className="mb-2"
-        placeholder="보상 (예: 게임 30분)"
-        value={reward}
-        onChange={(e) => setReward(e.target.value)}
+        placeholder="원하시는 포인트점수를 적어주세요"
+        value={points}
+        onChange={(e) => setPoints(e.target.value)}
       />
       <Form.Control
         type="file"

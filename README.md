@@ -2,6 +2,10 @@
 
 =======
 
+## Quest Points
+
+Parents can assign a numeric point value when creating a quest. When a child marks the quest as completed, those points are automatically added to their total. Point values are shown with a "점" suffix on quest lists.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
