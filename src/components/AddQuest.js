@@ -13,6 +13,7 @@ export default function AddQuest({ selectedChild }) {
     e.preventDefault();
     if (!title) return alert("제목을 입력하세요!");
     if (!selectedChild) return alert("퀘스트를 받을 아이를 선택하세요!");
+    
     const pts = Number(points);
     if (!Number.isFinite(pts) || pts <= 0) return alert("포인트를 입력하세요!");
 
@@ -56,7 +57,7 @@ export default function AddQuest({ selectedChild }) {
       <Form.Control
         type="number"
         className="mb-2"
-        placeholder="원하시는 포인트점수를 적어주세요"
+        placeholder="포인트"
         value={points}
         onChange={(e) => setPoints(e.target.value)}
       />
