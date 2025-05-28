@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  Timestamp,
+  increment,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import getLocalDateKey from "../utils/getLocalDateKey";
-import { Card, Badge, ListGroup, Spinner, Button } from "react-bootstrap";
+import { Card, Badge, ListGroup, Spinner, Button, Form } from "react-bootstrap";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks.js";
 import RoutineEditModal from "./RoutineEditModal";
 
@@ -50,12 +59,70 @@ export default function ChildRoutineStatus({ childUid }) {
 
   if (loading) return <Spinner animation="border" />;
 
+  const toggleItem = async (session, idx, current) => {
+    if (!window.confirm("루틴체크내역을 변경하시겠습니까?")) return;
+
+    const dailyRef = doc(db, "routines", childUid, "daily", today);
+    const snap = await getDoc(dailyRef);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const sessionData = data[session] || {};
+    const updated = {
+      ...sessionData,
+      awardedSteps: Array.isArray(sessionData.awardedSteps)
+        ? [...sessionData.awardedSteps]
+        : [],
+    };
+    updated[idx] = !current;
+    updated.completedCount = tasks[session].reduce(
+      (acc, _, i) => acc + (updated[i + 1] ? 1 : 0),
+      0
+    );
+
+    const userRef = doc(db, "users", childUid);
+    if (updated[idx] && !current) {
+      await updateDoc(userRef, { points: increment(10) });
+      if (!updated.awardedSteps.includes(idx)) {
+        updated.awardedSteps.push(idx);
+        await updateDoc(dailyRef, {
+          [`${session}.awardedSteps`]: arrayUnion(idx),
+        });
+      }
+    } else if (!updated[idx] && current) {
+      await updateDoc(userRef, { points: increment(-10) });
+      updated.awardedSteps = updated.awardedSteps.filter((n) => n !== idx);
+      await updateDoc(dailyRef, {
+        [`${session}.awardedSteps`]: arrayRemove(idx),
+      });
+    }
+
+    await updateDoc(dailyRef, {
+      [session]: updated,
+      updatedAt: Timestamp.now(),
+    });
+
+    setRoutine((prev) => ({ ...prev, [session]: updated }));
+  };
+
   const renderTasks = (session) =>
     tasks[session].map((task, index) => {
       const completed = routine[session][index + 1];
       return (
-        <ListGroup.Item key={index}>
-          {completed ? "✅" : "❌"} {task}
+        <ListGroup.Item
+          key={index}
+          action
+          onClick={() => toggleItem(session, index + 1, completed)}
+          className="d-flex align-items-center"
+        >
+          <Form.Check
+            type="checkbox"
+            checked={completed}
+            onChange={() => toggleItem(session, index + 1, completed)}
+            className="me-2"
+          />
+          <span style={{ textDecoration: completed ? "line-through" : "none" }}>
+            {task}
+          </span>
         </ListGroup.Item>
       );
     });

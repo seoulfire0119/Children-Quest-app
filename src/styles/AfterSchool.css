@@ -15,3 +15,12 @@
   background: #ffd1d1;
   color: inherit;
 }
+
+/* 시간별 가독성을 위한 줄 색상 */
+.after-school tbody tr:nth-child(1) td { background: #fff7e6; }
+.after-school tbody tr:nth-child(2) td { background: #e6f7ff; }
+.after-school tbody tr:nth-child(3) td { background: #f9e6ff; }
+.after-school tbody tr:nth-child(4) td { background: #e6ffe6; }
+.after-school tbody tr:nth-child(5) td { background: #ffe6f7; }
+.after-school tbody tr:nth-child(6) td { background: #e6e6ff; }
+.after-school tbody tr:nth-child(7) td { background: #fff0e6; }

@@ -10,6 +10,7 @@ import {
   Timestamp,
   increment,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { ListGroup, Form, Badge, Spinner } from "react-bootstrap";
 
@@ -120,8 +121,6 @@ export default function RoutineList({ session }) {
   // 4) 단계 토글 핸들러
   const toggleStep = async (idx) => {
     if (!uid) return;
-    // 선행 단계가 완료되지 않으면 중지
-    if (idx > 1 && !steps[idx - 1]) return;
 
     // 새 상태 복제
     const updated = { ...steps, awardedSteps: [...steps.awardedSteps] };
@@ -140,14 +139,22 @@ export default function RoutineList({ session }) {
       updatedAt: Timestamp.now(),
     });
 
-    // 포인트 지급 (첫 체크 시 한 번만)
-    if (updated[idx] && !steps.awardedSteps.includes(idx)) {
-      const userRef = doc(db, "users", uid);
+    const userRef = doc(db, "users", uid);
+    if (updated[idx] && !steps[idx]) {
+      // 체크 → 포인트 증가
       await updateDoc(userRef, { points: increment(10) });
-      updated.awardedSteps.push(idx);
-      setSteps({ ...updated });
+      if (!updated.awardedSteps.includes(idx)) {
+        updated.awardedSteps.push(idx);
+        await updateDoc(docRef, {
+          [`${session}.awardedSteps`]: arrayUnion(idx),
+        });
+      }
+    } else if (!updated[idx] && steps[idx]) {
+      // 체크 해제 → 포인트 차감
+      await updateDoc(userRef, { points: increment(-10) });
+      updated.awardedSteps = updated.awardedSteps.filter((n) => n !== idx);
       await updateDoc(docRef, {
-        [`${session}.awardedSteps`]: arrayUnion(idx),
+        [`${session}.awardedSteps`]: arrayRemove(idx),
       });
     }
   };
@@ -169,19 +176,13 @@ export default function RoutineList({ session }) {
             key={i}
             action
             onClick={() => toggleStep(i + 1)}
-            disabled={i > 0 && !steps[i]}
             className="d-flex align-items-center"
-            style={{
-              cursor: i === 0 || steps[i] ? "pointer" : "not-allowed",
-              opacity: i === 0 || steps[i] ? 1 : 0.5,
-            }}
           >
             <Form.Check
               type="checkbox"
               checked={steps[i + 1]}
               onChange={() => toggleStep(i + 1)}
               className="me-2"
-              disabled={i > 0 && !steps[i]}
             />
             <span
               style={{
