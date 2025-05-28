@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks.js";
 import { auth, db } from "../firebase";
+import getLocalDateKey from "../utils/getLocalDateKey";
 import {
   doc,
   getDoc,
@@ -55,7 +56,7 @@ export default function RoutineList({ session }) {
 
   const [steps, setSteps] = useState(initialState);
   const [loading, setLoading] = useState(true);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateKey();
   const docRef = uid && doc(db, "routines", uid, "daily", today);
 
   // 3) Firestore에서 상태 로드
