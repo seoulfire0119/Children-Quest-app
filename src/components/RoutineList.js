@@ -9,8 +9,8 @@ import {
   updateDoc,
   Timestamp,
   increment,
-  arrayUnion,
-  arrayRemove,
+  arrayUnion, // 'main' 브랜치에서 추가된 import 유지
+  arrayRemove, // 'main' 브랜치에서 추가된 import 유지
 } from "firebase/firestore";
 import { ListGroup, Form, Badge, Spinner } from "react-bootstrap";
 
@@ -20,7 +20,7 @@ const createInitialState = (tasks) => {
     obj[i + 1] = false;
   });
   obj.completedCount = 0;
-  obj.awardedSteps = []; // Track which steps have been awarded points
+  obj.awardedSteps = []; // 'main' 브랜치에서 추가된 필드 유지
   return obj;
 };
 
@@ -35,7 +35,7 @@ export default function RoutineList({ session }) {
 
   useEffect(() => {
     if (!uid) return;
-    
+
     const loadRoutineConfig = async () => {
       try {
         const configSnap = await getDoc(doc(db, "routines", uid));
@@ -69,25 +69,25 @@ export default function RoutineList({ session }) {
       setLoading(false);
       return;
     }
-    
+
     let isMounted = true;
-    
+
     const loadRoutineData = async () => {
       try {
         const snap = await getDoc(docRef);
         let data = initialState;
-        
+
         if (snap.exists()) {
           const existing = snap.data()[session];
           if (existing) {
             // Merge existing data with initial state to handle structure changes
             data = { ...initialState, ...existing };
-            
-            // Ensure awardedSteps exists
+
+            // Ensure awardedSteps exists ('main' 브랜치 로직)
             if (!data.awardedSteps) {
               data.awardedSteps = [];
             }
-            
+
             // Update if structure has changed
             if (JSON.stringify(existing) !== JSON.stringify(data)) {
               await updateDoc(docRef, {
@@ -120,7 +120,7 @@ export default function RoutineList({ session }) {
             { merge: true }
           );
         }
-        
+
         if (isMounted) setSteps(data);
       } catch (err) {
         if (err.code !== "permission-denied") {
@@ -132,40 +132,40 @@ export default function RoutineList({ session }) {
     };
 
     loadRoutineData();
-    
+
     return () => {
       isMounted = false;
     };
   }, [uid, docRef, initialState, session, today]);
 
-  // 4) 단계 토글 핸들러 (중복 포인트 지급 방지)
+  // 4) 단계 토글 핸들러 ('main' 브랜치의 중복 포인트 방지 로직 사용)
   const toggleStep = async (idx) => {
     if (!uid) return;
 
     try {
       const userRef = doc(db, "users", uid);
-      
+
       // 새 상태 복제
       const updated = { ...steps };
       const newValue = !steps[idx];
       updated[idx] = newValue;
-      
+
       // 완료 개수 계산
       const count = TASKS.reduce(
         (acc, _, i) => acc + (updated[i + 1] ? 1 : 0),
         0
       );
       updated.completedCount = count;
-      
+
       // 포인트 증감 (중복 지급 방지)
       const awardedSteps = updated.awardedSteps || [];
-      
+
       if (newValue) {
         // 체크하는 경우: 이미 포인트를 받지 않았다면 포인트 지급
         if (!awardedSteps.includes(idx)) {
-          await updateDoc(userRef, { points: increment(10) });
+          await updateDoc(userRef, { points: increment(10) }); // 'main'은 10 포인트
           updated.awardedSteps = [...awardedSteps, idx];
-          
+
           // Firestore에 awardedSteps 업데이트
           await updateDoc(docRef, {
             [`${session}.awardedSteps`]: arrayUnion(idx),
@@ -174,28 +174,29 @@ export default function RoutineList({ session }) {
       } else {
         // 체크 해제하는 경우: 포인트를 받았다면 포인트 차감
         if (awardedSteps.includes(idx)) {
-          await updateDoc(userRef, { points: increment(-10) });
+          await updateDoc(userRef, { points: increment(-10) }); // 'main'은 10 포인트
           updated.awardedSteps = awardedSteps.filter((n) => n !== idx);
-          
+
           // Firestore에서 awardedSteps 제거
           await updateDoc(docRef, {
             [`${session}.awardedSteps`]: arrayRemove(idx),
           });
         }
       }
-      
+
       setSteps(updated);
 
-      // 루틴 상태 업데이트
+      // 루틴 상태 업데이트 (awardedSteps 제외한 부분 업데이트)
+      const { awardedSteps: _, ...rest } = updated; // awardedSteps는 이미 처리됨
       await updateDoc(docRef, {
-        [session]: updated,
-        updatedAt: Timestamp.now(),
+          [session]: updated, // awardedSteps 포함 전체 업데이트 (arrayUnion/Remove 후 최종 상태)
+          updatedAt: Timestamp.now(),
       });
-      
+
     } catch (error) {
       console.error("Error toggling step:", error);
-      // 에러 발생 시 상태 롤백
-      setSteps(steps);
+      // 에러 발생 시 상태 롤백 (원래 상태로)
+      setSteps(steps); 
     }
   };
 
@@ -221,9 +222,9 @@ export default function RoutineList({ session }) {
             <Form.Check
               type="checkbox"
               checked={steps[i + 1] || false}
-              onChange={() => toggleStep(i + 1)}
+              onChange={() => toggleStep(i + 1)} // onChange는 유지하되, readOnly로 이중 실행 방지
               className="me-2"
-              readOnly
+              readOnly // 'main' 브랜치에서 추가된 readOnly 유지
             />
             <span
               style={{

@@ -21,7 +21,7 @@ import ChildRoutineStatus from "./ChildRoutineStatus";
 import ChildPoints from "./ChildPoints";
 import UsageRequests from "./UsageRequests";
 import MarketAdmin from "./MarketAdmin";
-import AfterSchoolSchedule from "./AfterSchoolSchedule";
+import AfterSchoolAdmin from "./AfterSchoolAdmin"; // 충돌 해결: AfterSchoolAdmin 사용
 
 export default function ParentDashboard() {
   /* ───────── 상태 ───────── */
@@ -127,7 +127,8 @@ export default function ParentDashboard() {
 
           {/* 방과후 */}
           <Tab eventKey="afterSchool" title="방과후">
-            <AfterSchoolSchedule editable />
+            {/* 충돌 해결: AfterSchoolAdmin 사용 */}
+            <AfterSchoolAdmin />
           </Tab>
         </Tabs>
       </div>
