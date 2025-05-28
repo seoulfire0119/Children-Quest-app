@@ -9,6 +9,7 @@ import RoutineList from "./RoutineList";
 import PurchaseMarket from "./PurchaseMarket";
 import ChildPoints from "./ChildPoints";
 import AfterSchoolSchedule from "./AfterSchoolSchedule";
+import "../styles/PurchaseMarket.css";
 
 export default function ChildDashboard() {
   /* ──────────────── 상태 ──────────────── */
@@ -16,6 +17,7 @@ export default function ChildDashboard() {
   const [myName, setMyName] = useState("");
   const [reqExists, setReqExists] = useState(false);
   const [showMarket, setShowMarket] = useState(false); // 마켓 뷰 토글
+  const [invOpen, setInvOpen] = useState(false); // 인벤토리 토글
 
   /* ──────────────── 초기 데이터 로드 ──────────────── */
   useEffect(() => {
@@ -67,10 +69,10 @@ export default function ChildDashboard() {
         <Row>
           <div className="section-card text-center mb-3">
             <Col>
-              <p>
+              <p className="fs-5 fw-semibold">
                 <strong>{myName}</strong> ({auth.currentUser.email})
               </p>
-              <p>
+              <p className="fs-5">
                 👨‍👩‍👧‍👦 <strong>내 부모님:</strong>{" "}
                 {parents.length ? parents.join(", ") : "연동 없음"}
               </p>
@@ -92,7 +94,7 @@ export default function ChildDashboard() {
         <Tabs
           id="market-tab"
           activeKey={showMarket ? "market" : null} /* 내용 토글 */
-          onSelect={() => setShowMarket(true)} /* 클릭 시 열림 */
+          onSelect={() => setShowMarket((prev) => !prev)} /* 클릭 시 토글 */
           className="mb-3 single-tab" /* 100% 폭 */
         >
           <Tab
@@ -101,22 +103,20 @@ export default function ChildDashboard() {
             mountOnEnter
             unmountOnExit
           >
-            {/* 뒤로가기 버튼 */}
-            <Button
-              variant="warning"
-              className="w-100 py-2 mb-3 d-flex align-items-center
-                       justify-content-center gap-2 fw-semibold"
-              style={{
-                borderRadius: "0.75rem",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-              }}
-              onClick={() => setShowMarket(false)}
-            >
-              <span style={{ fontSize: "1.25rem" }}>←</span>
-              퀘스트로 돌아가기
-            </Button>
+            <div className="d-flex gap-2 mb-3">
+              <Button
+                variant="warning"
+                className="inventory-toggle flex-grow-1"
+                onClick={() => setInvOpen(!invOpen)}
+              >
+                <span role="img" aria-label="chest" className="me-1">
+                  📦
+                </span>
+                {invOpen ? "인벤토리 접기" : "내 인벤토리 펼치기"}
+              </Button>
+            </div>
 
-            <PurchaseMarket />
+            <PurchaseMarket invOpen={invOpen} setInvOpen={setInvOpen} />
           </Tab>
         </Tabs>
 

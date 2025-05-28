@@ -24,19 +24,17 @@ export default function AfterSchoolSchedule() {
             <th></th>
             {days.map((d) => (
               <th key={d} className={d === today ? "today-col" : ""}>
-                {d}요일
+                {d}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {times.map((t) => (
-            <tr key={t}>
+          {times.map((t, i) => (
+            <tr key={t} className={`row-${i + 1}`}>
               <td className="time-col">{t}</td>
               {days.map((d) => (
-                <td key={d} className={d === today ? "today-col" : ""}>
-                  {schedule[d]?.[t] || ""}
-                </td>
+                <td key={d}>{schedule[d]?.[t] || ""}</td>
               ))}
             </tr>
           ))}
