@@ -12,7 +12,6 @@ export default function AfterSchoolSchedule() {
     목: { "1시": "음악" },
     금: { "1시": "독서" },
   };
-
   const todayMap = ["일", "월", "화", "수", "목", "금", "토"];
   const today = todayMap[new Date().getDay()];
 
@@ -31,12 +30,10 @@ export default function AfterSchoolSchedule() {
         </thead>
         <tbody>
           {times.map((t, i) => (
-            <tr key={t} className={`row-${i}`}>
+            <tr key={t} className={`row-${i + 1}`}>
               <td className="time-col">{t}</td>
               {days.map((d) => (
-                <td key={d} className={d === today ? "today-col" : ""}>
-                  {schedule[d]?.[t] || ""}
-                </td>
+                <td key={d}>{schedule[d]?.[t] || ""}</td>
               ))}
             </tr>
           ))}

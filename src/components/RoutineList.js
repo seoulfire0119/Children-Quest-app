@@ -10,6 +10,7 @@ import {
   Timestamp,
   increment,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { ListGroup, Form, Badge, Spinner } from "react-bootstrap";
 
@@ -141,8 +142,26 @@ export default function RoutineList({ session }) {
       updatedAt: Timestamp.now(),
     });
 
-    // 포인트 증감
-    await updateDoc(userRef, { points: increment(newValue ? 20 : -20) });
+    // 포인트 증감 (중복 지급 방지)
+    if (updated[idx]) {
+      if (!steps.awardedSteps.includes(idx)) {
+        await updateDoc(userRef, { points: increment(10) });
+        updated.awardedSteps.push(idx);
+        setSteps({ ...updated });
+        await updateDoc(docRef, {
+          [`${session}.awardedSteps`]: arrayUnion(idx),
+        });
+      }
+    } else {
+      if (steps.awardedSteps.includes(idx)) {
+        await updateDoc(userRef, { points: increment(-10) });
+        updated.awardedSteps = updated.awardedSteps.filter((n) => n !== idx);
+        setSteps({ ...updated });
+        await updateDoc(docRef, {
+          [`${session}.awardedSteps`]: arrayRemove(idx),
+        });
+      }
+    }
   };
 
   if (!uid) return null;
