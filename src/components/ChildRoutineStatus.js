@@ -4,6 +4,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  increment,
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -28,74 +29,100 @@ export default function ChildRoutineStatus({ childUid }) {
 
     const fetchRoutine = async () => {
       setLoading(true);
-      const dailyRef = doc(db, "routines", childUid, "daily", today);
-      const configRef = doc(db, "routines", childUid);
-      const [dailySnap, configSnap] = await Promise.all([
-        getDoc(dailyRef),
-        getDoc(configRef),
-      ]);
-      if (dailySnap.exists()) {
-        setRoutine(dailySnap.data());
-      } else {
-        setRoutine({ morning: {}, afternoon: {} });
+      try {
+        const dailyRef = doc(db, "routines", childUid, "daily", today);
+        const configRef = doc(db, "routines", childUid);
+        const [dailySnap, configSnap] = await Promise.all([
+          getDoc(dailyRef),
+          getDoc(configRef),
+        ]);
+        
+        if (dailySnap.exists()) {
+          setRoutine(dailySnap.data());
+        } else {
+          setRoutine({ morning: {}, afternoon: {} });
+        }
+        
+        if (configSnap.exists()) {
+          const data = configSnap.data();
+          setTasks({
+            morning: data.tasks_morning || DEFAULT_ROUTINE_TASKS.morning,
+            afternoon: data.tasks_afternoon || DEFAULT_ROUTINE_TASKS.afternoon,
+          });
+        } else {
+          setTasks(DEFAULT_ROUTINE_TASKS);
+        }
+      } catch (error) {
+        console.error("Error fetching routine:", error);
+      } finally {
+        setLoading(false);
       }
-      if (configSnap.exists()) {
-        const data = configSnap.data();
-        setTasks({
-          morning: data.tasks_morning || DEFAULT_ROUTINE_TASKS.morning,
-          afternoon: data.tasks_afternoon || DEFAULT_ROUTINE_TASKS.afternoon,
-        });
-      } else {
-        setTasks(DEFAULT_ROUTINE_TASKS);
-      }
-      setLoading(false);
     };
 
     fetchRoutine();
   }, [childUid, today]);
 
-  const toggleStep = async (session, idx) => {
+  const toggleStep = async (sessionKey, idx) => {
     if (!window.confirm("루틴 체크내역을 변경하시겠습니까?")) return;
-    const updatedSession = {
-      ...routine[session],
-      [idx]: !routine[session][idx],
-    };
-    const count = tasks[session].reduce(
-      (acc, _, i) => acc + (updatedSession[i + 1] ? 1 : 0),
-      0
-    );
-    updatedSession.completedCount = count;
-    const updated = { ...routine, [session]: updatedSession };
-    setRoutine(updated);
-    const dailyRef = doc(db, "routines", childUid, "daily", today);
-    await updateDoc(dailyRef, {
-      [session]: updatedSession,
-      updatedAt: Timestamp.now(),
-    });
+    
+    try {
+      const current = routine[sessionKey][idx] || false;
+      const updatedSession = { ...routine[sessionKey], [idx]: !current };
+      
+      // Calculate completed count
+      const count = tasks[sessionKey].reduce(
+        (acc, _, i) => acc + (updatedSession[i + 1] ? 1 : 0),
+        0
+      );
+      updatedSession.completedCount = count;
+      
+      const newRoutine = { ...routine, [sessionKey]: updatedSession };
+      setRoutine(newRoutine);
+
+      // Update daily routine
+      const docRef = doc(db, "routines", childUid, "daily", today);
+      await setDoc(
+        docRef, 
+        { 
+          [sessionKey]: updatedSession,
+          updatedAt: Timestamp.now()
+        }, 
+        { merge: true }
+      );
+
+      // Update user points
+      const pointsDiff = !current ? 20 : -20;
+      await updateDoc(doc(db, "users", childUid), {
+        points: increment(pointsDiff),
+      });
+    } catch (error) {
+      console.error("Error toggling step:", error);
+    }
   };
 
-  if (loading) return <Spinner animation="border" />;
-
-  const renderTasks = (session) =>
-    tasks[session].map((task, index) => {
-      const completed = routine[session][index + 1];
+  const renderTasks = (sessionKey) =>
+    tasks[sessionKey].map((task, index) => {
+      const completed = routine[sessionKey][index + 1] || false;
       return (
         <ListGroup.Item
           key={index}
           action
           className="d-flex align-items-center"
-          onClick={() => toggleStep(session, index + 1)}
+          onClick={() => toggleStep(sessionKey, index + 1)}
         >
           <Form.Check
             type="checkbox"
             checked={completed}
             className="me-2"
-            onChange={() => toggleStep(session, index + 1)}
+            onChange={() => toggleStep(sessionKey, index + 1)}
+            readOnly
           />
           {task}
         </ListGroup.Item>
       );
     });
+
+  if (loading) return <Spinner animation="border" />;
 
   return (
     <div>
@@ -121,28 +148,32 @@ export default function ChildRoutineStatus({ childUid }) {
         <Card.Header>
           🌆 하교 후 루틴{" "}
           <Badge bg="secondary">
-            완료 {routine.afternoon.completedCount || 0}/
-            {tasks.afternoon.length}
+            완료 {routine.afternoon.completedCount || 0}/{tasks.afternoon.length}
           </Badge>
         </Card.Header>
         <ListGroup variant="flush">{renderTasks("afternoon")}</ListGroup>
       </Card>
+      
       <RoutineEditModal
         show={showEdit}
         onHide={() => setShowEdit(false)}
         tasks={tasks}
         onSave={async (updated) => {
-          const docRef = doc(db, "routines", childUid);
-          await setDoc(
-            docRef,
-            {
-              tasks_morning: updated.morning,
-              tasks_afternoon: updated.afternoon,
-            },
-            { merge: true }
-          );
-          setTasks(updated);
-          setShowEdit(false);
+          try {
+            const docRef = doc(db, "routines", childUid);
+            await setDoc(
+              docRef,
+              {
+                tasks_morning: updated.morning,
+                tasks_afternoon: updated.afternoon,
+              },
+              { merge: true }
+            );
+            setTasks(updated);
+            setShowEdit(false);
+          } catch (error) {
+            console.error("Error saving routine tasks:", error);
+          }
         }}
       />
     </div>
