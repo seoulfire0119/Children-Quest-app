@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import getLocalDateKey from "../utils/getLocalDateKey";
 import { Card, Badge, ListGroup, Spinner, Button } from "react-bootstrap";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks.js";
 import RoutineEditModal from "./RoutineEditModal";
@@ -10,7 +11,7 @@ export default function ChildRoutineStatus({ childUid }) {
   const [tasks, setTasks] = useState(DEFAULT_ROUTINE_TASKS);
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateKey();
 
   useEffect(() => {
     if (!childUid) {
