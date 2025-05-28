@@ -131,7 +131,7 @@ export default function AfterSchoolSchedule({ editable }) {
     return () => {
       mounted = false;
     };
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, [createDefault]); // Empty dependency array means this effect runs once on mount
 
   // Function to save the currently edited cell's data
   const saveCell = async () => {
