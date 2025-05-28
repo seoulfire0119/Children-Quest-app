@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import getLocalDateKey from "../utils/getLocalDateKey";
-import { Card, Badge, ListGroup, Spinner, Button } from "react-bootstrap";
+import { Card, Badge, ListGroup, Spinner, Button, Form } from "react-bootstrap";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks.js";
 import RoutineEditModal from "./RoutineEditModal";
 
@@ -48,14 +54,45 @@ export default function ChildRoutineStatus({ childUid }) {
     fetchRoutine();
   }, [childUid, today]);
 
+  const toggleStep = async (session, idx) => {
+    if (!window.confirm("루틴 체크내역을 변경하시겠습니까?")) return;
+    const updatedSession = {
+      ...routine[session],
+      [idx]: !routine[session][idx],
+    };
+    const count = tasks[session].reduce(
+      (acc, _, i) => acc + (updatedSession[i + 1] ? 1 : 0),
+      0
+    );
+    updatedSession.completedCount = count;
+    const updated = { ...routine, [session]: updatedSession };
+    setRoutine(updated);
+    const dailyRef = doc(db, "routines", childUid, "daily", today);
+    await updateDoc(dailyRef, {
+      [session]: updatedSession,
+      updatedAt: Timestamp.now(),
+    });
+  };
+
   if (loading) return <Spinner animation="border" />;
 
   const renderTasks = (session) =>
     tasks[session].map((task, index) => {
       const completed = routine[session][index + 1];
       return (
-        <ListGroup.Item key={index}>
-          {completed ? "✅" : "❌"} {task}
+        <ListGroup.Item
+          key={index}
+          action
+          className="d-flex align-items-center"
+          onClick={() => toggleStep(session, index + 1)}
+        >
+          <Form.Check
+            type="checkbox"
+            checked={completed}
+            className="me-2"
+            onChange={() => toggleStep(session, index + 1)}
+          />
+          {task}
         </ListGroup.Item>
       );
     });
