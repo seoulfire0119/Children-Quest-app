@@ -9,6 +9,8 @@ import {
   updateDoc,
   Timestamp,
   increment,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { ListGroup, Form, Badge, Spinner } from "react-bootstrap";
 
@@ -18,6 +20,7 @@ const createInitialState = (tasks) => {
     obj[i + 1] = false;
   });
   obj.completedCount = 0;
+  obj.awardedSteps = []; // Track which steps have been awarded points
   return obj;
 };
 
@@ -32,7 +35,8 @@ export default function RoutineList({ session }) {
 
   useEffect(() => {
     if (!uid) return;
-    (async () => {
+    
+    const loadRoutineConfig = async () => {
       try {
         const configSnap = await getDoc(doc(db, "routines", uid));
         if (configSnap.exists()) {
@@ -46,7 +50,9 @@ export default function RoutineList({ session }) {
       } catch (err) {
         console.error("Load routine config error:", err);
       }
-    })();
+    };
+
+    loadRoutineConfig();
   }, [uid, session]);
 
   // 2) 초기 상태
@@ -63,15 +69,26 @@ export default function RoutineList({ session }) {
       setLoading(false);
       return;
     }
+    
     let isMounted = true;
-    (async () => {
+    
+    const loadRoutineData = async () => {
       try {
         const snap = await getDoc(docRef);
         let data = initialState;
+        
         if (snap.exists()) {
           const existing = snap.data()[session];
           if (existing) {
+            // Merge existing data with initial state to handle structure changes
             data = { ...initialState, ...existing };
+            
+            // Ensure awardedSteps exists
+            if (!data.awardedSteps) {
+              data.awardedSteps = [];
+            }
+            
+            // Update if structure has changed
             if (JSON.stringify(existing) !== JSON.stringify(data)) {
               await updateDoc(docRef, {
                 [session]: data,
@@ -79,12 +96,14 @@ export default function RoutineList({ session }) {
               });
             }
           } else {
+            // Initialize session data
             await updateDoc(docRef, {
               [session]: initialState,
               updatedAt: Timestamp.now(),
             });
           }
         } else {
+          // Create new document
           await setDoc(
             docRef,
             {
@@ -101,6 +120,7 @@ export default function RoutineList({ session }) {
             { merge: true }
           );
         }
+        
         if (isMounted) setSteps(data);
       } catch (err) {
         if (err.code !== "permission-denied") {
@@ -109,73 +129,65 @@ export default function RoutineList({ session }) {
       } finally {
         if (isMounted) setLoading(false);
       }
-    })();
+    };
+
+    loadRoutineData();
+    
     return () => {
       isMounted = false;
     };
   }, [uid, docRef, initialState, session, today]);
 
-  // 4) 단계 토글 핸들러
+  // 4) 단계 토글 핸들러 (중복 포인트 지급 방지)
   const toggleStep = async (idx) => {
     if (!uid) return;
 
-    // 새 상태 복제
-    const updated = { ...steps };
-    updated[idx] = !updated[idx];
-    // 완료 개수 계산
-    const count = TASKS.reduce(
-      (acc, _, i) => acc + (updated[i + 1] ? 1 : 0),
-      0
-    );
-    updated.completedCount = count;
-    setSteps(updated);
+    try {
+      const userRef = doc(db, "users", uid);
+      
+      // 새 상태 복제
+      const updated = { ...steps };
+      const newValue = !steps[idx];
+      updated[idx] = newValue;
+      
+      // 완료 개수 계산
+      const count = TASKS.reduce(
+        (acc, _, i) => acc + (updated[i + 1] ? 1 : 0),
+        0
+      );
+      updated.completedCount = count;
+      
+      // 포인트 증감 (중복 지급 방지)
+      const awardedSteps = updated.awardedSteps || [];
+      
+      if (newValue) {
+        // 체크하는 경우: 이미 포인트를 받지 않았다면 포인트 지급
+        if (!awardedSteps.includes(idx)) {
+          await updateDoc(userRef, { points: increment(10) });
+          updated.awardedSteps = [...awardedSteps, idx];
+          
+          // Firestore에 awardedSteps 업데이트
+          await updateDoc(docRef, {
+            [`${session}.awardedSteps`]: arrayUnion(idx),
+          });
+        }
+      } else {
+        // 체크 해제하는 경우: 포인트를 받았다면 포인트 차감
+        if (awardedSteps.includes(idx)) {
+          await updateDoc(userRef, { points: increment(-10) });
+          updated.awardedSteps = awardedSteps.filter((n) => n !== idx);
+          
+          // Firestore에서 awardedSteps 제거
+          await updateDoc(docRef, {
+            [`${session}.awardedSteps`]: arrayRemove(idx),
+          });
+        }
+      }
+      
+      setSteps(updated);
 
-    // Firestore 저장
-    await updateDoc(docRef, {
-      [session]: updated,
-      updatedAt: Timestamp.now(),
-    });
-
-    // 포인트 변동
-    const diff = updated[idx] ? 20 : -20;
-    await updateDoc(doc(db, "users", uid), { points: increment(diff) });
-  };
-
-  if (!uid) return null;
-  if (loading) return <Spinner animation="border" />;
-
-  return (
-    <div className="mb-4">
-      <h5>
-        {session === "morning" ? "🌅 등교 전 루틴" : "🌆 하교 후 루틴"}{" "}
-        <Badge bg="secondary">
-          {steps.completedCount} / {TASKS.length}
-        </Badge>
-      </h5>
-      <ListGroup>
-        {TASKS.map((label, i) => (
-          <ListGroup.Item
-            key={i}
-            action
-            onClick={() => toggleStep(i + 1)}
-            className="d-flex align-items-center"
-          >
-            <Form.Check
-              type="checkbox"
-              checked={steps[i + 1]}
-              onChange={() => toggleStep(i + 1)}
-              className="me-2"
-            />
-            <span
-              style={{
-                textDecoration: steps[i + 1] ? "line-through" : "none",
-              }}
-            >
-              {label}
-            </span>
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
-    </div>
-  );
-}
+      // 루틴 상태 업데이트
+      await updateDoc(docRef, {
+        [session]: updated,
+        updatedAt: Timestamp.now(),
+      });

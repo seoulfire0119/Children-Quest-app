@@ -78,16 +78,17 @@ export default function AfterSchoolSchedule({ editable }) {
           </tr>
         </thead>
         <tbody>
-          {times.map((t) => (
-            <tr key={t}>
+          {times.map((t, i) => (
+            <tr key={t} className={`row-${i + 1}`}>
               <td className="time-col">{t}</td>
               {days.map((d) => (
                 <td
                   key={d}
                   className={`${d === today ? "today-col" : ""} ${
                     schedule[d][t].highlight ? "highlight" : ""
-                  }`}
+                  } ${editable ? "editable-cell" : ""}`}
                   onClick={() => openEditor(d, t)}
+                  style={{ cursor: editable ? "pointer" : "default" }}
                 >
                   {schedule[d][t].text}
                 </td>
@@ -97,40 +98,45 @@ export default function AfterSchoolSchedule({ editable }) {
         </tbody>
       </Table>
 
-      <Modal show={!!editCell} onHide={() => setEditCell(null)}>
-        <Modal.Header closeButton>
-          <Modal.Title>시간표 수정</Modal.Title>
-        </Modal.Header>
-        {editCell && (
-          <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>
-                {editCell.day}요일 {editCell.time}
-              </Form.Label>
-              <Form.Control
-                value={editCell.text}
+      {editable && (
+        <Modal show={!!editCell} onHide={() => setEditCell(null)}>
+          <Modal.Header closeButton>
+            <Modal.Title>시간표 수정</Modal.Title>
+          </Modal.Header>
+          {editCell && (
+            <Modal.Body>
+              <Form.Group className="mb-3">
+                <Form.Label>
+                  {editCell.day}요일 {editCell.time}
+                </Form.Label>
+                <Form.Control
+                  value={editCell.text}
+                  onChange={(e) =>
+                    setEditCell({ ...editCell, text: e.target.value })
+                  }
+                  placeholder="활동 내용을 입력하세요"
+                />
+              </Form.Group>
+              <Form.Check
+                type="checkbox"
+                label="강조하기"
+                checked={editCell.highlight}
                 onChange={(e) =>
-                  setEditCell({ ...editCell, text: e.target.value })
+                  setEditCell({ ...editCell, highlight: e.target.checked })
                 }
               />
-            </Form.Group>
-            <Form.Check
-              type="checkbox"
-              label="강조하기"
-              checked={editCell.highlight}
-              onChange={(e) =>
-                setEditCell({ ...editCell, highlight: e.target.checked })
-              }
-            />
-          </Modal.Body>
-        )}
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setEditCell(null)}>
-            취소
-          </Button>
-          <Button onClick={saveCell}>확인</Button>
-        </Modal.Footer>
-      </Modal>
+            </Modal.Body>
+          )}
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setEditCell(null)}>
+              취소
+            </Button>
+            <Button variant="primary" onClick={saveCell}>
+              확인
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
     </div>
   );
 }
