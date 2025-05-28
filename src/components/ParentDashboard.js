@@ -127,7 +127,7 @@ export default function ParentDashboard() {
 
           {/* 방과후 */}
           <Tab eventKey="afterSchool" title="방과후">
-            <AfterSchoolSchedule />
+            <AfterSchoolSchedule editable />
           </Tab>
         </Tabs>
       </div>

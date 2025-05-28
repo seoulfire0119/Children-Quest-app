@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../firebase";
 import getLocalDateKey from "../utils/getLocalDateKey";
 import { Card, Badge, ListGroup, Spinner, Button } from "react-bootstrap";
@@ -50,12 +50,43 @@ export default function ChildRoutineStatus({ childUid }) {
 
   if (loading) return <Spinner animation="border" />;
 
-  const renderTasks = (session) =>
-    tasks[session].map((task, index) => {
-      const completed = routine[session][index + 1];
+  const toggleStep = async (sessionKey, idx) => {
+    if (!window.confirm("루틴체크내역을 변경하시겠습니까?")) return;
+    const current = routine[sessionKey][idx] || false;
+    const updatedSession = { ...routine[sessionKey], [idx]: !current };
+    const count = tasks[sessionKey].reduce(
+      (acc, _, i) => acc + (updatedSession[i + 1] ? 1 : 0),
+      0
+    );
+    updatedSession.completedCount = count;
+    const newRoutine = { ...routine, [sessionKey]: updatedSession };
+    setRoutine(newRoutine);
+
+    const docRef = doc(db, "routines", childUid, "daily", today);
+    await setDoc(docRef, { [sessionKey]: updatedSession }, { merge: true });
+
+    const diff = !current ? 20 : -20;
+    await updateDoc(doc(db, "users", childUid), {
+      points: increment(diff),
+    });
+  };
+
+  const renderTasks = (sessionKey) =>
+    tasks[sessionKey].map((task, index) => {
+      const completed = routine[sessionKey][index + 1];
       return (
-        <ListGroup.Item key={index}>
-          {completed ? "✅" : "❌"} {task}
+        <ListGroup.Item
+          key={index}
+          action
+          onClick={() => toggleStep(sessionKey, index + 1)}
+        >
+          <input
+            type="checkbox"
+            className="me-2"
+            checked={completed || false}
+            readOnly
+          />
+          {task}
         </ListGroup.Item>
       );
     });

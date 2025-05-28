@@ -5,6 +5,8 @@
 .after-school td {
   padding: 1rem;
   font-size: 1.25rem;
+  max-width: 4ch;
+  word-break: break-all;
 }
 .after-school .time-col {
   background: var(--bg-main);
@@ -14,4 +16,8 @@
 .after-school .today-col {
   background: #ffd1d1;
   color: inherit;
+}
+
+.after-school .highlight {
+  border: 2px solid red !important;
 }
