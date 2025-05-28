@@ -114,6 +114,13 @@ export default function ChildDashboard() {
                 </span>
                 {invOpen ? "인벤토리 접기" : "내 인벤토리 펼치기"}
               </Button>
+              <Button
+                variant="secondary"
+                className="flex-grow-1"
+                onClick={() => setShowMarket(false)}
+              >
+                포인트마켓 접기
+              </Button>
             </div>
 
             <PurchaseMarket invOpen={invOpen} setInvOpen={setInvOpen} />
