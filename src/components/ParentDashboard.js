@@ -1,4 +1,3 @@
-// src/components/ParentDashboard.js
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -12,6 +11,7 @@ import {
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
+// ── children components ────────────────────────────────────────────
 import AddQuest from "./AddQuest";
 import LinkChild from "./LinkChild";
 import ParentQuestList from "./ParentQuestList";
@@ -24,13 +24,13 @@ import MarketAdmin from "./MarketAdmin";
 import AfterSchoolAdmin from "./AfterSchoolAdmin";
 
 export default function ParentDashboard() {
-  /* ───────── 상태 ───────── */
+  /* ───────── state ───────── */
   const [name, setName] = useState("");
   const [childrenUids, setChildrenUids] = useState([]);
   const [selectedChild, setSelectedChild] = useState("");
   const [loading, setLoading] = useState(true);
 
-  /* ───────── 사용자 정보 로드 ───────── */
+  /* ───────── load user info ───────── */
   useEffect(() => {
     (async () => {
       const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
@@ -52,7 +52,7 @@ export default function ParentDashboard() {
   return (
     /* flex-column + min-vh-100 → 회원탈퇴 버튼을 항상 맨아래로 밀어냄 */
     <Container className="p-3 d-flex flex-column min-vh-100">
-      {/* ── 헤더 ───────────────────────────────────── */}
+      {/* ── header ─────────────────────── */}
       <Row className="align-items-center mb-3">
         <Col>
           <h2 className="m-0">👨‍👩‍👧 부모 대시보드</h2>
@@ -61,11 +61,10 @@ export default function ParentDashboard() {
           </small>
         </Col>
 
-        {/* 오른쪽 상단 로그아웃 (파란색) */}
         <Col xs="auto">
           <Button
             size="sm"
-            className="logout-btn" /* theme.css 에 정의 */
+            className="logout-btn"
             onClick={async () => {
               await auth.signOut();
               window.location.reload();
@@ -76,7 +75,7 @@ export default function ParentDashboard() {
         </Col>
       </Row>
 
-      {/* ── 메인 탭 영역(가변 높이) ─────────────────── */}
+      {/* ── main tabs ───────────────────── */}
       <div className="flex-grow-1">
         <Tabs defaultActiveKey="addQuest" className="parent-tabs mb-3">
           {/* 퀘스트 작성 */}
@@ -132,7 +131,7 @@ export default function ParentDashboard() {
         </Tabs>
       </div>
 
-      {/* ── 회원탈퇴 버튼(항상 맨아래) ───────────────── */}
+      {/* ── delete account button ────────── */}
       <Row className="justify-content-center mt-4">
         <Col xs="auto">
           <DeleteAccountButton />

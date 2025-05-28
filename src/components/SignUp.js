@@ -1,9 +1,16 @@
 // src/components/SignUp.js
 import React, { useState } from "react";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { Form, Button, Card } from "react-bootstrap";
+
+const provider = new GoogleAuthProvider();
 
 export default function SignUp({ goLogin }) {
   const [name, setName] = useState("");
@@ -30,6 +37,24 @@ export default function SignUp({ goLogin }) {
       });
 
       // 알림 없이 바로 로그인 화면으로 이동
+      goLogin();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleGoogle = async () => {
+    try {
+      const cred = await signInWithPopup(auth, provider);
+      await setDoc(
+        doc(db, "users", cred.user.uid),
+        {
+          name: cred.user.displayName ?? "",
+          email: cred.user.email,
+          role: "select",
+        },
+        { merge: true }
+      );
       goLogin();
     } catch (err) {
       alert(err.message);
@@ -67,8 +92,15 @@ export default function SignUp({ goLogin }) {
           value={pw2}
           onChange={(e) => setPw2(e.target.value)}
         />
-        <Button type="submit" className="w-100">
-          가입하기
+        <Button type="submit" className="w-100 mb-2">
+          이메일로 가입하기
+        </Button>
+        <Button
+          variant="outline-secondary"
+          className="w-100 mb-2"
+          onClick={handleGoogle}
+        >
+          Google 계정으로 가입하기
         </Button>
         <Button variant="link" className="w-100 mt-2" onClick={goLogin}>
           이미 계정이 있나요? 로그인
