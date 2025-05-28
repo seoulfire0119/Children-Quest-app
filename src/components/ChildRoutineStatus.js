@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../firebase";
 import getLocalDateKey from "../utils/getLocalDateKey";
-import { Card, Badge, ListGroup, Spinner, Button } from "react-bootstrap";
+import { Card, Badge, ListGroup, Spinner, Button, Form } from "react-bootstrap";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks.js";
 import RoutineEditModal from "./RoutineEditModal";
 
@@ -48,14 +48,46 @@ export default function ChildRoutineStatus({ childUid }) {
     fetchRoutine();
   }, [childUid, today]);
 
+  const toggleStep = async (sessionKey, idx) => {
+    if (!window.confirm("루틴체크내역을 변경하시겠습니까?")) return;
+    const current = routine[sessionKey][idx] || false;
+    const updatedSession = { ...routine[sessionKey], [idx]: !current };
+    const count = tasks[sessionKey].reduce(
+      (acc, _, i) => acc + (updatedSession[i + 1] ? 1 : 0),
+      0
+    );
+    updatedSession.completedCount = count;
+    const newRoutine = { ...routine, [sessionKey]: updatedSession };
+    setRoutine(newRoutine);
+
+    const dailyRef = doc(db, "routines", childUid, "daily", today);
+    await setDoc(dailyRef, { [sessionKey]: updatedSession }, { merge: true });
+    await updateDoc(doc(db, "users", childUid), {
+      points: increment(!current ? 20 : -20),
+    });
+  };
+
   if (loading) return <Spinner animation="border" />;
 
-  const renderTasks = (session) =>
-    tasks[session].map((task, index) => {
-      const completed = routine[session][index + 1];
+  const renderTasks = (sessionKey) =>
+    tasks[sessionKey].map((task, index) => {
+      const completed = routine[sessionKey][index + 1];
       return (
-        <ListGroup.Item key={index}>
-          {completed ? "✅" : "❌"} {task}
+        <ListGroup.Item
+          key={index}
+          action
+          onClick={() => toggleStep(sessionKey, index + 1)}
+          className="d-flex align-items-center"
+        >
+          <Form.Check
+            type="checkbox"
+            checked={completed}
+            onChange={() => toggleStep(sessionKey, index + 1)}
+            className="me-2"
+          />
+          <span style={{ textDecoration: completed ? "line-through" : "none" }}>
+            {task}
+          </span>
         </ListGroup.Item>
       );
     });
