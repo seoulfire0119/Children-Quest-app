@@ -187,7 +187,7 @@ export default function RoutineList({ session }) {
       setSteps(updated);
 
       // 루틴 상태 업데이트 (awardedSteps 제외한 부분 업데이트)
-      const { awardedSteps: _, ...rest } = updated; // awardedSteps는 이미 처리됨
+      const { id } = routine;
       await updateDoc(docRef, {
           [session]: updated, // awardedSteps 포함 전체 업데이트 (arrayUnion/Remove 후 최종 상태)
           updatedAt: Timestamp.now(),
