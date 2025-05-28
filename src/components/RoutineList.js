@@ -9,6 +9,8 @@ import {
   updateDoc,
   Timestamp,
   increment,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { ListGroup, Form, Badge, Spinner } from "react-bootstrap";
 
@@ -18,6 +20,7 @@ const createInitialState = (tasks) => {
     obj[i + 1] = false;
   });
   obj.completedCount = 0;
+  obj.awardedSteps = []; // 포인트가 지급된 단계들을 트래킹
   return obj;
 };
 
@@ -128,6 +131,12 @@ export default function RoutineList({ session }) {
       0
     );
     updated.completedCount = count;
+    
+    // awardedSteps 배열이 없으면 빈 배열로 초기화
+    if (!updated.awardedSteps) {
+      updated.awardedSteps = [];
+    }
+
     setSteps(updated);
 
     // Firestore 저장
@@ -136,10 +145,29 @@ export default function RoutineList({ session }) {
       updatedAt: Timestamp.now(),
     });
 
-    // 포인트 증감
+    // 포인트 시스템 (중복 지급 방지)
     const userRef = doc(db, "users", uid);
-    const diff = updated[idx] ? 20 : -20;
-    await updateDoc(userRef, { points: increment(diff) });
+    if (updated[idx]) {
+      // 체크했을 때: 아직 포인트를 받지 않은 경우에만 지급
+      if (!steps.awardedSteps?.includes(idx)) {
+        await updateDoc(userRef, { points: increment(10) });
+        updated.awardedSteps.push(idx);
+        setSteps({ ...updated });
+        await updateDoc(docRef, {
+          [`${session}.awardedSteps`]: arrayUnion(idx),
+        });
+      }
+    } else {
+      // 체크 해제했을 때: 이미 포인트를 받은 경우에만 차감
+      if (steps.awardedSteps?.includes(idx)) {
+        await updateDoc(userRef, { points: increment(-10) });
+        updated.awardedSteps = updated.awardedSteps.filter((n) => n !== idx);
+        setSteps({ ...updated });
+        await updateDoc(docRef, {
+          [`${session}.awardedSteps`]: arrayRemove(idx),
+        });
+      }
+    }
   };
 
   if (!uid) return null;

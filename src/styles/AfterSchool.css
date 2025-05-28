@@ -1,6 +1,7 @@
 .after-school table {
   background: var(--card-bg);
 }
+
 .after-school th,
 .after-school td {
   padding: 1rem;
@@ -8,16 +9,34 @@
   max-width: 4ch;
   word-break: break-all;
 }
+
 .after-school .time-col {
   background: var(--bg-main);
   color: var(--text-main);
   font-weight: 600;
 }
+
 .after-school .today-col {
-  background: #ffd1d1;
-  color: inherit;
+  background: #FF3B30;
+  color: #fff;
 }
 
+/* 특정 셀 강조 표시 */
 .after-school .highlight-cell {
   border: 2px solid red;
+}
+
+/* 각 시간별 행 색상 구분 */
+.after-school .row-1 td { background: #fff5e6; }
+.after-school .row-2 td { background: #e6f7ff; }
+.after-school .row-3 td { background: #e6ffe6; }
+.after-school .row-4 td { background: #fff0f6; }
+.after-school .row-5 td { background: #f0f5ff; }
+.after-school .row-6 td { background: #f9f0ff; }
+.after-school .row-7 td { background: #e8f5e9; }
+
+/* 오늘 열이 행별 색상보다 우선되도록 설정 */
+.after-school .today-col {
+  background: #FF3B30 !important;
+  color: #fff !important;
 }
