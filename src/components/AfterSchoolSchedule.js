@@ -124,4 +124,16 @@ export default function AfterSchoolSchedule({ editable = false }) {
             checked={edit.highlight}
             onChange={(e) => setEdit({ ...edit, highlight: e.target.checked })}
           />
-        </Mo
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setEdit({ ...edit, show: false })}>
+            취소
+          </Button>
+          <Button variant="primary" onClick={saveEdit}>
+            저장
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  );
+}
