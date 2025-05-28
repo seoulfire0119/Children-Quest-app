@@ -69,10 +69,10 @@ export default function ChildDashboard() {
         <Row>
           <div className="section-card text-center mb-3">
             <Col>
-              <p>
+              <p className="fs-5 fw-semibold">
                 <strong>{myName}</strong> ({auth.currentUser.email})
               </p>
-              <p>
+              <p className="fs-5">
                 👨‍👩‍👧‍👦 <strong>내 부모님:</strong>{" "}
                 {parents.length ? parents.join(", ") : "연동 없음"}
               </p>
@@ -94,7 +94,7 @@ export default function ChildDashboard() {
         <Tabs
           id="market-tab"
           activeKey={showMarket ? "market" : null} /* 내용 토글 */
-          onSelect={() => setShowMarket(true)} /* 클릭 시 열림 */
+          onSelect={() => setShowMarket((prev) => !prev)} /* 클릭 시 토글 */
           className="mb-3 single-tab" /* 100% 폭 */
         >
           <Tab
