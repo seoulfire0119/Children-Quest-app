@@ -191,3 +191,50 @@ export default function RoutineList({ session }) {
         [session]: updated,
         updatedAt: Timestamp.now(),
       });
+      
+    } catch (error) {
+      console.error("Error toggling step:", error);
+      // 에러 발생 시 상태 롤백
+      setSteps(steps);
+    }
+  };
+
+  if (!uid) return null;
+  if (loading) return <Spinner animation="border" />;
+
+  return (
+    <div className="mb-4">
+      <h5>
+        {session === "morning" ? "🌅 등교 전 루틴" : "🌆 하교 후 루틴"}{" "}
+        <Badge bg="secondary">
+          {steps.completedCount} / {TASKS.length}
+        </Badge>
+      </h5>
+      <ListGroup>
+        {TASKS.map((label, i) => (
+          <ListGroup.Item
+            key={i}
+            action
+            onClick={() => toggleStep(i + 1)}
+            className="d-flex align-items-center"
+          >
+            <Form.Check
+              type="checkbox"
+              checked={steps[i + 1] || false}
+              onChange={() => toggleStep(i + 1)}
+              className="me-2"
+              readOnly
+            />
+            <span
+              style={{
+                textDecoration: steps[i + 1] ? "line-through" : "none",
+              }}
+            >
+              {label}
+            </span>
+          </ListGroup.Item>
+        ))}
+      </ListGroup>
+    </div>
+  );
+}
