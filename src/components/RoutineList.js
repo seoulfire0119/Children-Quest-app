@@ -120,12 +120,13 @@ export default function RoutineList({ session }) {
   // 4) 단계 토글 핸들러
   const toggleStep = async (idx) => {
     if (!uid) return;
-    // 선행 단계가 완료되지 않으면 중지
-    if (idx > 1 && !steps[idx - 1]) return;
+
+    const userRef = doc(db, "users", uid);
 
     // 새 상태 복제
-    const updated = { ...steps, awardedSteps: [...steps.awardedSteps] };
-    updated[idx] = !updated[idx];
+    const updated = { ...steps };
+    const newValue = !steps[idx];
+    updated[idx] = newValue;
     // 완료 개수 계산
     const count = TASKS.reduce(
       (acc, _, i) => acc + (updated[i + 1] ? 1 : 0),
@@ -140,16 +141,8 @@ export default function RoutineList({ session }) {
       updatedAt: Timestamp.now(),
     });
 
-    // 포인트 지급 (첫 체크 시 한 번만)
-    if (updated[idx] && !steps.awardedSteps.includes(idx)) {
-      const userRef = doc(db, "users", uid);
-      await updateDoc(userRef, { points: increment(10) });
-      updated.awardedSteps.push(idx);
-      setSteps({ ...updated });
-      await updateDoc(docRef, {
-        [`${session}.awardedSteps`]: arrayUnion(idx),
-      });
-    }
+    // 포인트 증감
+    await updateDoc(userRef, { points: increment(newValue ? 20 : -20) });
   };
 
   if (!uid) return null;
@@ -169,19 +162,13 @@ export default function RoutineList({ session }) {
             key={i}
             action
             onClick={() => toggleStep(i + 1)}
-            disabled={i > 0 && !steps[i]}
             className="d-flex align-items-center"
-            style={{
-              cursor: i === 0 || steps[i] ? "pointer" : "not-allowed",
-              opacity: i === 0 || steps[i] ? 1 : 0.5,
-            }}
           >
             <Form.Check
               type="checkbox"
               checked={steps[i + 1]}
               onChange={() => toggleStep(i + 1)}
               className="me-2"
-              disabled={i > 0 && !steps[i]}
             />
             <span
               style={{

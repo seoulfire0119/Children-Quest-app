@@ -5,6 +5,8 @@
 .after-school td {
   padding: 1rem;
   font-size: 1.25rem;
+  max-width: 4ch;
+  word-break: break-all;
 }
 .after-school .time-col {
   background: var(--bg-main);
@@ -15,3 +17,12 @@
   background: #ffd1d1;
   color: inherit;
 }
+
+/* 시간별 행 색상 */
+.after-school tbody tr.row-0 { background: #fffbe6; }
+.after-school tbody tr.row-1 { background: #fef6e8; }
+.after-school tbody tr.row-2 { background: #f2f9ff; }
+.after-school tbody tr.row-3 { background: #e8f4ff; }
+.after-school tbody tr.row-4 { background: #e8f9f1; }
+.after-school tbody tr.row-5 { background: #f0f6ff; }
+.after-school tbody tr.row-6 { background: #f9f0ff; }
