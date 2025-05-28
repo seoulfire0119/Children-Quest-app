@@ -1,30 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Table, Spinner } from "react-bootstrap";
 import "../styles/AfterSchool.css";
 
-const TIMES = ["1~2", "2~3", "3~4", "4~5", "6~7", "7~8"];
-const DEFAULT_SCHEDULE = {
-  mon: ["국어", "", "", "", "", ""],
-  tue: ["수학", "", "", "", "", ""],
-  wed: ["축구", "", "", "", "", ""],
-  thu: ["음악", "", "", "", "", ""],
-  fri: ["독서", "", "", "", "", ""],
-};
+const TIMES = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
 
-export default function AfterSchoolSchedule() {
-  const [schedule, setSchedule] = useState(DEFAULT_SCHEDULE);
+const createDefault = () => ({
+  mon: TIMES.map(() => ({ text: "", highlight: false })),
+  tue: TIMES.map(() => ({ text: "", highlight: false })),
+  wed: TIMES.map(() => ({ text: "", highlight: false })),
+  thu: TIMES.map(() => ({ text: "", highlight: false })),
+  fri: TIMES.map(() => ({ text: "", highlight: false })),
+});
+
+const docRef = doc(db, "afterSchool", "schedule");
+
+export default function AfterSchoolAdmin() {
+  const [schedule, setSchedule] = useState(createDefault());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
-        const snap = await getDoc(doc(db, "afterSchool", "schedule"));
+        const snap = await getDoc(docRef);
         if (snap.exists()) {
           const data = snap.data();
-          if (isMounted) setSchedule({ ...DEFAULT_SCHEDULE, ...data });
+          if (isMounted) setSchedule({ ...createDefault(), ...data });
         }
       } catch (e) {
         console.error("afterSchool load", e);
@@ -35,7 +38,7 @@ export default function AfterSchoolSchedule() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [docRef]);
 
   if (loading) return <Spinner animation="border" />;
 
@@ -46,6 +49,18 @@ export default function AfterSchoolSchedule() {
     { key: "thu", label: "목" },
     { key: "fri", label: "금" },
   ];
+
+  const editCell = async (dayKey, idx) => {
+    const current = schedule[dayKey][idx] || { text: "", highlight: false };
+    const text = window.prompt("내용을 입력하세요", current.text);
+    if (text === null) return;
+    const highlight = window.confirm("강조하시겠습니까?");
+    const updated = { ...schedule };
+    updated[dayKey] = [...updated[dayKey]];
+    updated[dayKey][idx] = { text, highlight };
+    setSchedule(updated);
+    await setDoc(docRef, updated, { merge: true });
+  };
 
   return (
     <div className="after-school">
@@ -63,7 +78,15 @@ export default function AfterSchoolSchedule() {
             <tr key={d.key}>
               <th>{d.label}</th>
               {TIMES.map((_, idx) => (
-                <td key={idx}>{schedule[d.key][idx] || ""}</td>
+                <td
+                  key={idx}
+                  onClick={() => editCell(d.key, idx)}
+                  className={
+                    schedule[d.key][idx]?.highlight ? "highlight-cell" : ""
+                  }
+                >
+                  {schedule[d.key][idx]?.text || ""}
+                </td>
               ))}
             </tr>
           ))}

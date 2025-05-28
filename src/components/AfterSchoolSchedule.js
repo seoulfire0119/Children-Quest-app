@@ -1,20 +1,38 @@
-import React from "react";
-import { Table } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Table, Spinner } from "react-bootstrap";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 import "../styles/AfterSchool.css";
 
-export default function AfterSchoolSchedule() {
-  const times = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
-  const days = ["월", "화", "수", "목", "금"];
-  const schedule = {
-    월: { "1시": "영어학원" },
-    화: { "1시": "독서" },
-    수: { "1시": "태권도" },
-    목: { "1시": "음악" },
-    금: { "1시": "독서" },
-  };
+const TIMES = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
+const DAYS = ["월", "화", "수", "목", "금"];
+const todayMap = ["일", "월", "화", "수", "목", "금", "토"];
+const docRef = doc(db, "afterSchool", "schedule");
 
-  const todayMap = ["일", "월", "화", "수", "목", "금", "토"];
+export default function AfterSchoolSchedule() {
+  const [schedule, setSchedule] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const snap = await getDoc(docRef);
+        if (snap.exists() && mounted) setSchedule(snap.data());
+      } catch (e) {
+        console.error("afterSchool load", e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [docRef]);
+
   const today = todayMap[new Date().getDay()];
+
+  if (loading) return <Spinner animation="border" />;
 
   return (
     <div className="after-school">
@@ -22,20 +40,25 @@ export default function AfterSchoolSchedule() {
         <thead>
           <tr>
             <th></th>
-            {days.map((d) => (
+            {DAYS.map((d) => (
               <th key={d} className={d === today ? "today-col" : ""}>
-                {d}요일
+                {d}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {times.map((t) => (
+          {TIMES.map((t, ti) => (
             <tr key={t}>
               <td className="time-col">{t}</td>
-              {days.map((d) => (
-                <td key={d} className={d === today ? "today-col" : ""}>
-                  {schedule[d]?.[t] || ""}
+              {DAYS.map((d, di) => (
+                <td
+                  key={d}
+                  className={`${
+                    d === today ? "today-col" : ""
+                  } ${schedule[d]?.[ti]?.highlight ? "highlight-cell" : ""}`}
+                >
+                  {schedule[d]?.[ti]?.text || ""}
                 </td>
               ))}
             </tr>

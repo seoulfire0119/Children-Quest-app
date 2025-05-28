@@ -17,7 +17,7 @@ import {
 import { Card, Button, Spinner, Form, Collapse, Modal } from "react-bootstrap"; // 🔸 Modal 추가
 import "../styles/PurchaseMarket.css";
 
-export default function PurchaseMarket() {
+export default function PurchaseMarket({ invOpen, setInvOpen }) {
   /* ───────── 상태 ───────── */
   const [inventory, setInventory] = useState([]);
   const [market, setMarket] = useState([]);
@@ -25,7 +25,6 @@ export default function PurchaseMarket() {
   const [selectedParent, setSelectedParent] = useState({}); // txId → parentUid
 
   const [loading, setLoading] = useState(true);
-  const [invOpen, setInvOpen] = useState(false);
 
   /* 🔸 모달용 상태 */
   const [parentModal, setParentModal] = useState(false); // 모달 on/off
@@ -153,18 +152,6 @@ export default function PurchaseMarket() {
   /* ───────── 뷰 ───────── */
   return (
     <>
-      {/* ▣ 인벤토리 토글 ▣ */}
-      <Button
-        variant="warning"
-        className="inventory-toggle mb-3"
-        onClick={() => setInvOpen(!invOpen)}
-      >
-        <span role="img" aria-label="chest" className="me-1">
-          📦
-        </span>
-        {invOpen ? "인벤토리 접기" : "내 인벤토리 펼치기"}
-      </Button>
-
       {/* ▣ 인벤토리 리스트 ▣ */}
       <Collapse in={invOpen}>
         <div className="inventory-list mb-4">
@@ -225,7 +212,7 @@ export default function PurchaseMarket() {
 
       {/* ▣ 패밀리마켓 ▣ */}
       <h5
-        className="mb-3"
+        className="mb-3 text-center"
         style={{
           color: "#A8FF60" /* 글자색 */,
           fontSize: "2rem" /* 폰트 크기 */,
