@@ -12,7 +12,6 @@ export default function AfterSchoolSchedule() {
     목: { "1시": "음악" },
     금: { "1시": "독서" },
   };
-
   const todayMap = ["일", "월", "화", "수", "목", "금", "토"];
   const today = todayMap[new Date().getDay()];
 

@@ -122,9 +122,12 @@ export default function RoutineList({ session }) {
   const toggleStep = async (idx) => {
     if (!uid) return;
 
+    const userRef = doc(db, "users", uid);
+
     // 새 상태 복제
-    const updated = { ...steps, awardedSteps: [...steps.awardedSteps] };
-    updated[idx] = !updated[idx];
+    const updated = { ...steps };
+    const newValue = !steps[idx];
+    updated[idx] = newValue;
     // 완료 개수 계산
     const count = TASKS.reduce(
       (acc, _, i) => acc + (updated[i + 1] ? 1 : 0),
@@ -139,7 +142,7 @@ export default function RoutineList({ session }) {
       updatedAt: Timestamp.now(),
     });
 
-    const userRef = doc(db, "users", uid);
+    // 포인트 증감 (중복 지급 방지)
     if (updated[idx]) {
       if (!steps.awardedSteps.includes(idx)) {
         await updateDoc(userRef, { points: increment(10) });
