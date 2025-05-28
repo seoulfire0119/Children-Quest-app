@@ -92,7 +92,7 @@ export default function ChildRoutineStatus({ childUid }) {
     };
 
     fetchData();
-  }, [childUid, today]);
+  }, [childUid, today, tasks]);
 
   /* ── toggle step ──────────────────────── */
   const toggleStep = async (sessionKey, taskIdx) => {
