@@ -49,7 +49,7 @@ export default function AfterSchoolAdmin() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [docRef]);
 
   const openEdit = (day, time) => {
     const cell = schedule[day][time] || { text: "", highlight: false };
