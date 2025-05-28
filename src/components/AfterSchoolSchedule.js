@@ -24,7 +24,7 @@ export default function AfterSchoolSchedule() {
             <th></th>
             {days.map((d) => (
               <th key={d} className={d === today ? "today-col" : ""}>
-                {d}요일
+                {d}
               </th>
             ))}
           </tr>

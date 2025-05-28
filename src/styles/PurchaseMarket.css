@@ -5,15 +5,10 @@
 /* ========== 1. 공통 레이아웃 ========== */
 .market-grid {
   display: grid;
-
-  /* 열(트랙) 규칙
-     - 최소 140 px 보다 작아지지 않고
-     - 남는 공간이 있으면 모든 열이 똑같이 넓어지며
-     - 뷰포트가 좁아지면 열 개수가 자동 감소 */
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.6rem;
-  justify-content: center;   /* 마지막 줄을 가운데 정렬 */
+  justify-items: center;
+  justify-content: center;
 }
 
 /* 카드 자체 넓이가 늘어나다 못해 너무 커지는 게 싫다면 +α */
