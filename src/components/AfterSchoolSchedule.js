@@ -207,7 +207,7 @@ export default function AfterSchoolSchedule({ editable }) {
                     key={`${d}-${t}`}
                     className={`
                       ${d === today ? "today-col" : ""}
-                      ${cellData.highlight ? "highlight table-warning" : ""}
+                      ${cellData.highlight ? "highlight" : ""}
                       ${editable ? "editable-cell" : ""}
                       align-middle
                     `}
