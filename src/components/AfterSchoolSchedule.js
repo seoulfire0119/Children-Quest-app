@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Table, Modal, Button, Form } from "react-bootstrap";
 // Assuming db is correctly configured in this path
 // import { db } from "../firebase"; 
@@ -81,16 +81,16 @@ export default function AfterSchoolSchedule({ editable }) {
   const days = ["월", "화", "수", "목", "금"];
 
   // Function to create a default empty schedule structure
-  const createDefault = () => {
-    const obj = {};
-    days.forEach((d) => {
-      obj[d] = {};
-      times.forEach((t) => {
-        obj[d][t] = { text: "", highlight: false }; // Each cell has text and highlight status
-      });
+ const createDefault = useCallback(() => {
+  const obj = {};
+  days.forEach((d) => {
+    obj[d] = {};
+    times.forEach((t) => {
+      obj[d][t] = { text: "", highlight: false };
     });
-    return obj;
-  };
+  });
+  return obj;
+}, [days, times]); // 👈 의존성을 명시적으로 추가
 
   // State for the schedule data
   const [schedule, setSchedule] = useState(createDefault());
