@@ -1,71 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Modal, Button, Form } from "react-bootstrap";
-// Assuming db is correctly configured in this path
-// import { db } from "../firebase"; 
-// For standalone functionality, let's mock db and its functions
-// In a real Firebase setup, you would use the actual imports.
-
-// --- Firebase Firestore Mock Start ---
-// This is a mock for demonstration if firebase is not set up.
-// In a real application, ensure firebase is initialized and db is exported from '../firebase'.
-const mockDb = {
-  collectionName: "afterSchool",
-  docName: "schedule",
-  data: {}, // Stores the schedule data in memory
-};
-
-const doc = (db, collectionName, docName) => {
-  // Mocking the doc function
-  return {
-    _db: db,
-    _collectionName: collectionName,
-    _docName: docName,
-    path: `${collectionName}/${docName}`, // For debugging or logging
-  };
-};
-
-const getDoc = async (docRef) => {
-  // Mocking getDoc
-  // Simulating an async operation
-  await new Promise(resolve => setTimeout(resolve, 100));
-  if (docRef._collectionName === mockDb.collectionName && docRef._docName === mockDb.docName) {
-    if (Object.keys(mockDb.data).length > 0) {
-      return {
-        exists: () => true,
-        data: () => JSON.parse(JSON.stringify(mockDb.data)), // Return a deep copy
-      };
-    }
-  }
-  return { exists: () => false };
-};
-
-const setDoc = async (docRef, data, options) => {
-  // Mocking setDoc
-  await new Promise(resolve => setTimeout(resolve, 100));
-  if (docRef._collectionName === mockDb.collectionName && docRef._docName === mockDb.docName) {
-    if (options && options.merge) {
-      // Deep merge for nested objects like schedule structure
-      const mergeDeep = (target, source) => {
-        for (const key in source) {
-          if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-            if (!target[key]) Object.assign(target, { [key]: {} });
-            mergeDeep(target[key], source[key]);
-          } else {
-            Object.assign(target, { [key]: source[key] });
-          }
-        }
-      }
-      mergeDeep(mockDb.data, data);
-    } else {
-      mockDb.data = JSON.parse(JSON.stringify(data)); // Store a deep copy
-    }
-    console.log("Mock Firestore: Data saved for", docRef.path, mockDb.data);
-    return;
-  }
-  throw new Error("Mock Firestore: Error saving document.");
-};
-const db = mockDb; // Use the mock db
-// --- Firebase Firestore Mock End ---
+import { db } from "../firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 
 // Assuming AfterSchool.css exists and provides necessary styles
@@ -78,15 +14,21 @@ const db = mockDb; // Use the mock db
 export default function AfterSchoolSchedule({ editable }) {
   // Define times and days for the schedule
   const times = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
-  const days = ["월", "화", "수", "목", "금"];
+  const DAYS = [
+    { key: "mon", label: "월" },
+    { key: "tue", label: "화" },
+    { key: "wed", label: "수" },
+    { key: "thu", label: "목" },
+    { key: "fri", label: "금" },
+  ];
 
   // Function to create a default empty schedule structure
   const createDefault = () => {
     const obj = {};
-    days.forEach((d) => {
-      obj[d] = {};
+    DAYS.forEach((d) => {
+      obj[d.key] = {};
       times.forEach((t) => {
-        obj[d][t] = { text: "", highlight: false }; // Each cell has text and highlight status
+        obj[d.key][t] = { text: "", highlight: false };
       });
     });
     return obj;
@@ -95,7 +37,8 @@ export default function AfterSchoolSchedule({ editable }) {
   // State for the schedule data
   const [schedule, setSchedule] = useState(createDefault());
   // State to manage which cell is currently being edited
-  const [editCell, setEditCell] = useState(null); // null or { day, time, text, highlight }
+  // { day: key, label, time, text, highlight }
+  const [editCell, setEditCell] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
   // useEffect to fetch schedule data from Firestore when the component mounts
@@ -163,10 +106,10 @@ export default function AfterSchoolSchedule({ editable }) {
   };
 
   // Function to open the editor modal for a specific cell
-  const openEditor = (day, time) => {
-    if (!editable) return; // Only open if the schedule is in editable mode
-    const currentCellData = schedule[day]?.[time] || { text: "", highlight: false };
-    setEditCell({ day, time, text: currentCellData.text, highlight: currentCellData.highlight });
+  const openEditor = (dayKey, time, label) => {
+    if (!editable) return;
+    const currentCellData = schedule[dayKey]?.[time] || { text: "", highlight: false };
+    setEditCell({ day: dayKey, label, time, text: currentCellData.text, highlight: currentCellData.highlight });
   };
 
   // Determine the current day to highlight the respective column
@@ -189,9 +132,13 @@ export default function AfterSchoolSchedule({ editable }) {
         <thead className="table-light">
           <tr>
             <th style={{ width: '10%' }}>시간</th> {/* Time column header */}
-            {days.map((d) => (
-              <th key={d} className={d === today ? "today-col table-info" : ""} style={{ width: '18%' }}>
-                {d} {/* Day column header (Mon, Tue, etc.) */}
+            {DAYS.map((d) => (
+              <th
+                key={d.key}
+                className={d.label === today ? "today-col table-info" : ""}
+                style={{ width: '18%' }}
+              >
+                {d.label}
               </th>
             ))}
           </tr>
@@ -200,18 +147,18 @@ export default function AfterSchoolSchedule({ editable }) {
           {times.map((t, i) => (
             <tr key={t} className={`row-${i + 1}`}>
               <td className="time-col align-middle">{t}</td> {/* Time slot (1시, 2시, etc.) */}
-              {days.map((d) => {
-                const cellData = schedule[d]?.[t] || { text: "", highlight: false };
+              {DAYS.map((d) => {
+                const cellData = schedule[d.key]?.[t] || { text: "", highlight: false };
                 return (
                   <td
-                    key={`${d}-${t}`}
+                    key={`${d.key}-${t}`}
                     className={`
-                      ${d === today ? "today-col" : ""}
-                      ${cellData.highlight ? "highlight table-warning" : ""}
+                      ${d.label === today ? "today-col" : ""}
+                      ${cellData.highlight ? "highlight" : ""}
                       ${editable ? "editable-cell" : ""}
                       align-middle
                     `}
-                    onClick={() => openEditor(d, t)}
+                    onClick={() => openEditor(d.key, t, d.label)}
                     style={{ 
                       cursor: editable ? "pointer" : "default",
                       minHeight: '60px', // Ensure cells have some height
@@ -237,7 +184,7 @@ export default function AfterSchoolSchedule({ editable }) {
             <Modal.Body>
               <Form.Group className="mb-3">
                 <Form.Label className="fw-bold">
-                  {editCell.day}요일 {editCell.time} {/* Display which cell is being edited */}
+                  {editCell.label}요일 {editCell.time}
                 </Form.Label>
                 <Form.Control
                   as="textarea"
@@ -270,17 +217,6 @@ export default function AfterSchoolSchedule({ editable }) {
           </Modal.Footer>
         </Modal>
       )}
-       {/* Mock data persistence note for testing */}
-       {!editable && (
-         <div className="mt-3 p-2 bg-light border rounded small">
-            <p className="mb-1"><strong>참고:</strong> 현재 읽기 전용 모드입니다.</p>
-            {Object.keys(mockDb.data).length > 0 && (
-                <p className="mb-0">
-                    (테스트용 목업 데이터가 로드되었습니다. 편집 모드로 전환하여 내용을 수정하고 저장할 수 있습니다.)
-                </p>
-            )}
-         </div>
-       )}
     </div>
   );
 }
