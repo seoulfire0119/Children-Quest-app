@@ -199,14 +199,10 @@ export default function AfterSchoolSchedule({ editable }) {
         </Modal>
       )}
       
-      {!editable && (
+     {!editable && (
           <div className="mt-3 p-2 bg-light border rounded small">
             <p className="mb-1"><strong>참고:</strong> 현재 읽기 전용 모드입니다.</p>
-            {Object.keys(mockDb.data).length > 0 && (
-                <p className="mb-0">
-                    (테스트용 목업 데이터가 로드되었습니다. 편집 모드로 전환하여 내용을 수정하고 저장할 수 있습니다.)
-                </p>
-            )}
+            {/* Mock DB 관련 코드를 완전히 삭제 */}
           </div>
       )}
     </div>
