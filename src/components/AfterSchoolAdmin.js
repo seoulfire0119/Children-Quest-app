@@ -86,7 +86,7 @@ export default function AfterSchoolAdmin() {
               <td className="time-col">{t}</td>
               {DAYS.map((d) => {
                 const cell = schedule[d.key][t] || {};
-                const cls = cell.highlight ? "highlight-cell" : "";
+                const cls = cell.highlight ? "highlight" : "";
                 return (
                   <td
                     key={d.key}
