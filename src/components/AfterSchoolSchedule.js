@@ -1,70 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Table, Modal, Button, Form } from "react-bootstrap";
+import { db } from "../firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 // Assume db is correctly configured in this path
 // import { db } from "../firebase";
 
-// --- Firebase Firestore Mock Start ---
-// This is a mock for demonstration if firebase is not set up.
-// In a real application, ensure firebase is initialized and db is exported from '../firebase'.
-const mockDb = {
-  collectionName: "afterSchool",
-  docName: "schedule",
-  data: {}, // Stores the schedule data in memory
-};
 
-const doc = (db, collectionName, docName) => {
-  // Mocking the doc function
-  return {
-    _db: db,
-    _collectionName: collectionName,
-    _docName: docName,
-    path: `${collectionName}/${docName}`, // For debugging or logging
-  };
-};
-
-const getDoc = async (docRef) => {
-  // Mocking getDoc
-  // Simulating an async operation
-  await new Promise(resolve => setTimeout(resolve, 100));
-  if (docRef._collectionName === mockDb.collectionName && docRef._docName === mockDb.docName) {
-    if (Object.keys(mockDb.data).length > 0) {
-      return {
-        exists: () => true,
-        data: () => JSON.parse(JSON.stringify(mockDb.data)), // Return a deep copy
-      };
-    }
-  }
-  return { exists: () => false };
-};
-
-const setDoc = async (docRef, data, options) => {
-  // Mocking setDoc
-  await new Promise(resolve => setTimeout(resolve, 100));
-  if (docRef._collectionName === mockDb.collectionName && docRef._docName === mockDb.docName) {
-    if (options && options.merge) {
-      // Deep merge for nested objects like schedule structure
-      const mergeDeep = (target, source) => {
-        for (const key in source) {
-          if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-            if (!target[key]) Object.assign(target, { [key]: {} });
-            mergeDeep(target[key], source[key]);
-          } else {
-            Object.assign(target, { [key]: source[key] });
-          }
-        }
-      }
-      mergeDeep(mockDb.data, data);
-    } else {
-      mockDb.data = JSON.parse(JSON.stringify(data)); // Store a deep copy
-    }
-    console.log("Mock Firestore: Data saved for", docRef.path, mockDb.data);
-    return;
-  }
-  throw new Error("Mock Firestore: Error saving document.");
-};
-const db = mockDb; // Use the mock db
-// --- Firebase Firestore Mock End ---
 
 // Assuming AfterSchool.css exists and provides necessary styles
 
