@@ -1,14 +1,19 @@
 /* ==============================================
-    After-School Schedule Table - 한 화면 맞춤 스타일
+    After-School Schedule Table - 최종 반응형 스타일
    ==============================================
 */
 
-/* 1. 스크롤 컨테이너는 이제 필요 없으므로 관련 스타일 제거 */
+/* 1. 스크롤 컨테이너 */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* 2. 시간표 테이블 */
 .after-school-table {
-  width: 100%; /* 테이블 너비를 항상 부모 요소에 100% 맞춤 */
-  table-layout: fixed; /* 테이블 너비를 고정하여 내용에 따라 늘어나지 않게 함 */
+  width: 100%;
+  min-width: 600px; /* 모바일에서 최소 너비 보장 */
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -18,26 +23,33 @@
 
 /* 3. 테이블 헤더 (요일 & 시간) */
 .after-school-table thead th {
-  background-color: #343a40;
+  background-color: #343a40; /* 기본 헤더 배경 (어두운 색) */
   color: white;
-  padding: 1rem;
-  font-size: 1.25rem; /* PC에서는 큰 폰트 */
+  padding: 0.75rem;
+  font-size: 1.1rem;
   font-weight: 600;
   text-align: center;
   border-bottom: 2px solid #454d55;
+  width: 18%; /* 모든 요일 칸 너비 통일 */
 }
 
-/* 오늘 요일 강조 색상 (우선순위 높게 설정) */
+/* 시간 헤더는 너비를 더 좁게 설정 */
+.after-school-table thead .time-header-col {
+  width: 10%;
+}
+
+/* ▼▼▼ [수정됨] 오늘 요일 강조 색상 복구 ▼▼▼ */
+/* a. 일반 헤더보다 우선순위를 높여서 오늘 날짜 색상이 제대로 보이게 함 */
 .after-school-table thead .today-col {
-  background-color: #FF3B30 !important;
+  background-color: #FF3B30 !important; /* '오늘'은 항상 빨간색 */
   color: white;
 }
 
 /* 4. 테이블의 모든 칸(셀) 기본 스타일 */
 .after-school-table td {
   padding: 1rem;
-  font-size: 1.25rem; /* PC에서는 큰 폰트 */
-  word-break: break-all; /* 긴 단어 강제 줄바꿈 (매우 중요) */
+  font-size: 1.25rem;
+  word-break: break-all;
   border: 1px solid #e9ecef;
   text-align: center;
   vertical-align: middle;
@@ -52,12 +64,12 @@
 
 /* 6. 오늘 날짜에 해당하는 데이터 열 */
 .after-school .today-col {
-  background: #fff5f5;
+  background: #fff5f5; /* 데이터 부분은 연한 빨강으로 처리 */
 }
 
 /* 7. '강조하기' 체크된 칸 */
 .after-school .highlight {
-  background-color: #fff3cd;
+  background-color: #fff3cd; /* 하이라이트는 노란색 계열로 변경 */
   font-weight: bold;
   border: 2px solid #ffc107 !important;
   box-shadow: none;
@@ -70,12 +82,8 @@
   transition: background-color 0.2s ease;
 }
 
-/* ======================================================
-   ▼▼▼ 모바일 화면을 위한 핵심 수정 부분 ▼▼▼
-   ======================================================
-*/
-
-/* 기본(PC) 상태에서는 아이콘을 숨기고 '시간' 텍스트를 보여줌 */
+/* ▼▼▼ [수정됨] 화면 크기에 따른 '시간' 헤더 처리 ▼▼▼ */
+/* b. 기본(PC) 상태에서는 아이콘을 숨기고 '시간' 텍스트를 보여줌 */
 .time-header-col .icon {
   display: none;
 }
@@ -83,19 +91,16 @@
   display: inline;
 }
 
-/* 화면이 768px보다 좁아지면(모바일), 아래 스타일 적용 */
+/* c. 화면이 768px보다 좁아지면(모바일), 텍스트를 숨기고 아이콘을 보여줌 */
 @media (max-width: 768px) {
-  /* 글자 크기와 여백을 대폭 줄여서 공간 확보 */
   .after-school-table th,
   .after-school-table td {
-    padding: 0.5rem 0.2rem; /* 좌우 여백 최소화 */
-    font-size: 0.8rem; /* 폰트 크기 줄임 */
+    padding: 0.5rem;
+    font-size: 0.9rem;
   }
-
-  /* '시간' 텍스트는 숨기고, 아이콘만 보여줌 */
   .time-header-col .icon {
     display: inline;
-    font-size: 1.2rem; /* 아이콘 크기 조정 */
+    font-size: 1.5rem; /* 아이콘 크기 키움 */
   }
   .time-header-col .text {
     display: none;
