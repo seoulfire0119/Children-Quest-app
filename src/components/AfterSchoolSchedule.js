@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table, Modal, Button, Form } from "react-bootstrap";
 import { db } from "../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import "../styles/AfterSchool.css";
 
 // Assume db is correctly configured in this path
 // import { db } from "../firebase";
