@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Table, Modal, Button, Form } from "react-bootstrap";
-// Assuming db is correctly configured in this path
-// import { db } from "../firebase"; 
-// For standalone functionality, let's mock db and its functions
-// In a real Firebase setup, you would use the actual imports.
+
+// Assume db is correctly configured in this path
+// import { db } from "../firebase";
 
 // --- Firebase Firestore Mock Start ---
 // This is a mock for demonstration if firebase is not set up.
@@ -67,85 +66,65 @@ const setDoc = async (docRef, data, options) => {
 const db = mockDb; // Use the mock db
 // --- Firebase Firestore Mock End ---
 
-
 // Assuming AfterSchool.css exists and provides necessary styles
-// For example:
-// .after-school-table .today-col { background-color: #e6f7ff; }
-// .after-school-table .highlight { background-color: #fffbe6; font-weight: bold; }
-// .after-school-table .editable-cell:hover { background-color: #f0f0f0; }
-// .time-col { font-weight: bold; background-color: #f8f9fa; }
+
+// ## 변경점 1: 성능 최적화를 위해 상수와 헬퍼 함수를 컴포넌트 밖으로 이동
+const TIMES = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
+const DAYS = ["월", "화", "수", "목", "금"];
+
+// 기본 스케줄 구조를 생성하는 함수
+const createDefaultSchedule = () => {
+  const obj = {};
+  DAYS.forEach((d) => {
+    obj[d] = {};
+    TIMES.forEach((t) => {
+      obj[d][t] = { text: "", highlight: false };
+    });
+  });
+  return obj;
+};
 
 export default function AfterSchoolSchedule({ editable }) {
-  // Define times and days for the schedule
-  const times = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
-  const DAYS = [
-    { key: "mon", label: "월" },
-    { key: "tue", label: "화" },
-    { key: "wed", label: "수" },
-    { key: "thu", label: "목" },
-    { key: "fri", label: "금" },
-  ];
-
-  // Function to create a default empty schedule structure
-  const createDefault = () => {
-    const obj = {};
-    DAYS.forEach((d) => {
-      obj[d.key] = {};
-      times.forEach((t) => {
-        obj[d.key][t] = { text: "", highlight: false };
-      });
-    });
-    return obj;
-  };
-
   // State for the schedule data
-  const [schedule, setSchedule] = useState(createDefault());
+  const [schedule, setSchedule] = useState(createDefaultSchedule());
   // State to manage which cell is currently being edited
-  // { day: key, label, time, text, highlight }
-  const [editCell, setEditCell] = useState(null);
+  const [editCell, setEditCell] = useState(null); // { day, time, text, highlight }
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
-  // useEffect to fetch schedule data from Firestore when the component mounts
+  // Firestore에서 스케줄 데이터를 가져오는 useEffect
   useEffect(() => {
-    let mounted = true; // Flag to prevent state updates if component is unmounted
+    let mounted = true;
     setIsLoading(true);
     (async () => {
       try {
-        // Create a document reference
         const scheduleDocRef = doc(db, "afterSchool", "schedule");
-        // Fetch the document
         const snap = await getDoc(scheduleDocRef);
         if (mounted) {
           if (snap.exists()) {
-            // If document exists, merge its data with the default structure
-            // This ensures all cells are present even if some are not in Firestore
-            setSchedule({ ...createDefault(), ...snap.data() });
+            setSchedule({ ...createDefaultSchedule(), ...snap.data() });
           } else {
-            // If no document exists, use the default empty schedule
-            setSchedule(createDefault());
+            setSchedule(createDefaultSchedule());
             console.log("No schedule found in Firestore, using default.");
           }
         }
       } catch (e) {
         console.error("Error loading afterSchool schedule:", e);
-        if (mounted) setSchedule(createDefault()); // Fallback to default on error
+        if (mounted) setSchedule(createDefaultSchedule());
       } finally {
         if (mounted) setIsLoading(false);
       }
     })();
 
-    // Cleanup function to set mounted to false when component unmounts
     return () => {
       mounted = false;
     };
-  }, [createDefault]); // Empty dependency array means this effect runs once on mount
+  }, []);
 
-  // Function to save the currently edited cell's data
+  // 현재 수정 중인 셀 데이터를 저장하는 함수
   const saveCell = async () => {
-    if (!editCell) return; // Do nothing if no cell is being edited
+    if (!editCell) return;
 
     const { day, time, text, highlight } = editCell;
-    // Create an updated schedule object
     const updatedSchedule = {
       ...schedule,
       [day]: {
@@ -154,36 +133,32 @@ export default function AfterSchoolSchedule({ editable }) {
       },
     };
 
-    setSchedule(updatedSchedule); // Optimistically update the local state
+    setSchedule(updatedSchedule);
 
     try {
-      // Create a document reference
       const scheduleDocRef = doc(db, "afterSchool", "schedule");
-      // Save the updated schedule to Firestore, merging with existing data
       await setDoc(scheduleDocRef, updatedSchedule, { merge: true });
       console.log("Schedule saved successfully to Firestore.");
     } catch (e) {
       console.error("Error saving afterSchool schedule:", e);
-      // Potentially revert optimistic update here or show an error message
     }
-    setEditCell(null); // Close the edit modal
+    setEditCell(null);
   };
-
-  // Function to open the editor modal for a specific cell
-  const openEditor = (dayKey, time, label) => {
+  
+  // ## 변경점 2: DAYS가 문자열 배열이므로, dayKey와 time만 인자로 받음
+  // 특정 셀의 편집 모달을 여는 함수
+  const openEditor = (day, time) => {
     if (!editable) return;
-    const currentCellData = schedule[dayKey]?.[time] || { text: "", highlight: false };
-    setEditCell({ day: dayKey, label, time, text: currentCellData.text, highlight: currentCellData.highlight });
+    const currentCellData = schedule[day]?.[time] || { text: "", highlight: false };
+    setEditCell({ day, time, text: currentCellData.text, highlight: currentCellData.highlight });
   };
 
-  // Determine the current day to highlight the respective column
-  const todayMap = ["일", "월", "화", "수", "목", "금", "토"]; // Sunday to Saturday
+  const todayMap = ["일", "월", "화", "수", "목", "금", "토"];
   const today = todayMap[new Date().getDay()];
 
   if (isLoading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
-        {/* Using a simple text loader as Spinner might not be available without react-bootstrap properly set up */}
         <div>Loading schedule...</div>
       </div>
     );
@@ -195,37 +170,36 @@ export default function AfterSchoolSchedule({ editable }) {
       <Table bordered className="text-center fs-5 after-school-table shadow-sm">
         <thead className="table-light">
           <tr>
-            <th style={{ width: '10%' }}>시간</th> {/* Time column header */}
+            <th style={{ width: '10%' }}>시간</th>
+            {/* ## 변경점 3: d.key, d.label 대신 d를 직접 사용 */}
             {DAYS.map((d) => (
-              <th
-                key={d.key}
-                className={d.label === today ? "today-col table-info" : ""}
-                style={{ width: '18%' }}
-              >
-                {d.label}
+              <th key={d} className={d === today ? "today-col table-info" : ""} style={{ width: '18%' }}>
+                {d}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {times.map((t, i) => (
+          {TIMES.map((t, i) => (
             <tr key={t} className={`row-${i + 1}`}>
-              <td className="time-col align-middle">{t}</td> {/* Time slot (1시, 2시, etc.) */}
+              <td className="time-col align-middle">{t}</td>
               {DAYS.map((d) => {
-                const cellData = schedule[d.key]?.[t] || { text: "", highlight: false };
+                // ## 변경점 4: schedule[d.key] 대신 schedule[d] 사용
+                const cellData = schedule[d]?.[t] || { text: "", highlight: false };
                 return (
                   <td
-                    key={`${d.key}-${t}`}
+                    key={`${d}-${t}`}
                     className={`
-                      ${d.label === today ? "today-col" : ""}
+                      ${d === today ? "today-col" : ""}
                       ${cellData.highlight ? "highlight" : ""}
                       ${editable ? "editable-cell" : ""}
                       align-middle
                     `}
-                    onClick={() => openEditor(d.key, t, d.label)}
-                    style={{ 
+                    // ## 변경점 5: openEditor 인자 수정
+                    onClick={() => openEditor(d, t)}
+                    style={{
                       cursor: editable ? "pointer" : "default",
-                      minHeight: '60px', // Ensure cells have some height
+                      minHeight: '60px',
                       verticalAlign: 'middle'
                     }}
                   >
@@ -238,17 +212,18 @@ export default function AfterSchoolSchedule({ editable }) {
         </tbody>
       </Table>
 
-      {/* Modal for editing a schedule cell */}
+      {/* 시간표 셀 수정을 위한 모달 */}
       {editable && editCell && (
         <Modal show={!!editCell} onHide={() => setEditCell(null)} centered>
           <Modal.Header closeButton>
             <Modal.Title>시간표 항목 수정</Modal.Title>
           </Modal.Header>
-          {editCell && ( // Ensure editCell is not null before accessing its properties
+          {editCell && (
             <Modal.Body>
               <Form.Group className="mb-3">
                 <Form.Label className="fw-bold">
-                  {editCell.label}요일 {editCell.time}
+                  {/* ## 변경점 6: editCell.label 대신 editCell.day 사용 */}
+                  {editCell.day}요일 {editCell.time}
                 </Form.Label>
                 <Form.Control
                   as="textarea"
@@ -281,17 +256,17 @@ export default function AfterSchoolSchedule({ editable }) {
           </Modal.Footer>
         </Modal>
       )}
-       {/* Mock data persistence note for testing */}
-       {!editable && (
-         <div className="mt-3 p-2 bg-light border rounded small">
+      
+      {!editable && (
+          <div className="mt-3 p-2 bg-light border rounded small">
             <p className="mb-1"><strong>참고:</strong> 현재 읽기 전용 모드입니다.</p>
             {Object.keys(mockDb.data).length > 0 && (
                 <p className="mb-0">
                     (테스트용 목업 데이터가 로드되었습니다. 편집 모드로 전환하여 내용을 수정하고 저장할 수 있습니다.)
                 </p>
             )}
-         </div>
-       )}
+          </div>
+      )}
     </div>
   );
 }
