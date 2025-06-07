@@ -174,7 +174,7 @@ export default function RoutineList({ session }) {
 
       <ListGroup>
         {TASKS.map((label, i) => {
-          const id = i + 1;                       {/* ← 1-based id 정의 */}
+          const id = i + 1;                       // ← 1-based id 정의
           return (
             <ListGroup.Item
               key={id}
