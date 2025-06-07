@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState } from "react"; // useCallback, useMemo는 더 이상 필요 없으므로 제거합니다.
 import { Table, Modal, Button, Form } from "react-bootstrap";
-// Assuming db is correctly configured in this path
-// import { db } from "../firebase"; 
-// For standalone functionality, let's mock db and its functions
-// In a real Firebase setup, you would use the actual imports.
+
+// Assume db is correctly configured in this path
+// import { db } from "../firebase";
 
 // --- Firebase Firestore Mock Start ---
 // This is a mock for demonstration if firebase is not set up.
@@ -67,33 +66,28 @@ const setDoc = async (docRef, data, options) => {
 const db = mockDb; // Use the mock db
 // --- Firebase Firestore Mock End ---
 
-
 // Assuming AfterSchool.css exists and provides necessary styles
-// For example:
-// .after-school-table .today-col { background-color: #e6f7ff; }
-// .after-school-table .highlight { background-color: #fffbe6; font-weight: bold; }
-// .after-school-table .editable-cell:hover { background-color: #f0f0f0; }
-// .time-col { font-weight: bold; background-color: #f8f9fa; }
 
-export default function AfterSchoolSchedule({ editable }) {
-  // Define times and days for the schedule
-  const times = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
-  const days = ["월", "화", "수", "목", "금"];
+// Define times and days as constants outside the component
+// These won't change on re-renders, solving the useCallback dependency issue.
+const TIMES = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
+const DAYS = ["월", "화", "수", "목", "금"];
 
-  // Function to create a default empty schedule structure
- const createDefault = useCallback(() => {
+// Function to create a default empty schedule structure, also outside the component
+const createDefaultSchedule = () => {
   const obj = {};
-  days.forEach((d) => {
+  DAYS.forEach((d) => {
     obj[d] = {};
-    times.forEach((t) => {
+    TIMES.forEach((t) => {
       obj[d][t] = { text: "", highlight: false };
     });
   });
   return obj;
-}, [days, times]); // 👈 의존성을 명시적으로 추가
+};
 
+export default function AfterSchoolSchedule({ editable }) {
   // State for the schedule data
-  const [schedule, setSchedule] = useState(createDefault());
+  const [schedule, setSchedule] = useState(createDefaultSchedule()); // Use the outside function
   // State to manage which cell is currently being edited
   const [editCell, setEditCell] = useState(null); // null or { day, time, text, highlight }
   const [isLoading, setIsLoading] = useState(true); // Loading state
@@ -112,16 +106,16 @@ export default function AfterSchoolSchedule({ editable }) {
           if (snap.exists()) {
             // If document exists, merge its data with the default structure
             // This ensures all cells are present even if some are not in Firestore
-            setSchedule({ ...createDefault(), ...snap.data() });
+            setSchedule({ ...createDefaultSchedule(), ...snap.data() }); // Use the outside function
           } else {
             // If no document exists, use the default empty schedule
-            setSchedule(createDefault());
+            setSchedule(createDefaultSchedule()); // Use the outside function
             console.log("No schedule found in Firestore, using default.");
           }
         }
       } catch (e) {
         console.error("Error loading afterSchool schedule:", e);
-        if (mounted) setSchedule(createDefault()); // Fallback to default on error
+        if (mounted) setSchedule(createDefaultSchedule()); // Fallback to default on error
       } finally {
         if (mounted) setIsLoading(false);
       }
@@ -131,7 +125,7 @@ export default function AfterSchoolSchedule({ editable }) {
     return () => {
       mounted = false;
     };
-  }, [createDefault]); // Empty dependency array means this effect runs once on mount
+  }, []); // Empty dependency array because createDefaultSchedule is now outside and constant
 
   // Function to save the currently edited cell's data
   const saveCell = async () => {
@@ -189,7 +183,7 @@ export default function AfterSchoolSchedule({ editable }) {
         <thead className="table-light">
           <tr>
             <th style={{ width: '10%' }}>시간</th> {/* Time column header */}
-            {days.map((d) => (
+            {DAYS.map((d) => ( // Use global DAYS
               <th key={d} className={d === today ? "today-col table-info" : ""} style={{ width: '18%' }}>
                 {d} {/* Day column header (Mon, Tue, etc.) */}
               </th>
@@ -197,10 +191,10 @@ export default function AfterSchoolSchedule({ editable }) {
           </tr>
         </thead>
         <tbody>
-          {times.map((t, i) => (
+          {TIMES.map((t, i) => ( // Use global TIMES
             <tr key={t} className={`row-${i + 1}`}>
               <td className="time-col align-middle">{t}</td> {/* Time slot (1시, 2시, etc.) */}
-              {days.map((d) => {
+              {DAYS.map((d) => { // Use global DAYS
                 const cellData = schedule[d]?.[t] || { text: "", highlight: false };
                 return (
                   <td
@@ -212,7 +206,7 @@ export default function AfterSchoolSchedule({ editable }) {
                       align-middle
                     `}
                     onClick={() => openEditor(d, t)}
-                    style={{ 
+                    style={{
                       cursor: editable ? "pointer" : "default",
                       minHeight: '60px', // Ensure cells have some height
                       verticalAlign: 'middle'
@@ -270,17 +264,17 @@ export default function AfterSchoolSchedule({ editable }) {
           </Modal.Footer>
         </Modal>
       )}
-       {/* Mock data persistence note for testing */}
-       {!editable && (
-         <div className="mt-3 p-2 bg-light border rounded small">
-            <p className="mb-1"><strong>참고:</strong> 현재 읽기 전용 모드입니다.</p>
-            {Object.keys(mockDb.data).length > 0 && (
-                <p className="mb-0">
-                    (테스트용 목업 데이터가 로드되었습니다. 편집 모드로 전환하여 내용을 수정하고 저장할 수 있습니다.)
-                </p>
-            )}
-         </div>
-       )}
+        {/* Mock data persistence note for testing */}
+        {!editable && (
+           <div className="mt-3 p-2 bg-light border rounded small">
+             <p className="mb-1"><strong>참고:</strong> 현재 읽기 전용 모드입니다.</p>
+             {Object.keys(mockDb.data).length > 0 && (
+                 <p className="mb-0">
+                     (테스트용 목업 데이터가 로드되었습니다. 편집 모드로 전환하여 내용을 수정하고 저장할 수 있습니다.)
+                 </p>
+             )}
+           </div>
+        )}
     </div>
   );
 }
