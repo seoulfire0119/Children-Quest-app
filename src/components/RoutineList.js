@@ -18,7 +18,7 @@ import { ListGroup, Form, Badge, Spinner } from "react-bootstrap";
 const createInitialState = (tasks) => {
   const base = {};
   tasks.forEach((_, i) => {
-    base[i + 1] = false;          // 1-based
+    base[i + 1] = false; // 1-based
   });
   base.completedCount = 0;
   base.awardedSteps = [];
@@ -58,10 +58,6 @@ export default function RoutineList({ session }) {
   const initialState = useMemo(() => createInitialState(TASKS), [TASKS]);
   const [steps, setSteps] = useState(initialState);
   const [loading, setLoading] = useState(true);
-<<<<<<< HEAD
-=======
-
->>>>>>> 8af2c2e60d1a0314e8fea7552eb419cb9c7a348b
   const today = getLocalDateKey();
   const docRef = uid && doc(db, "routines", uid, "daily", today);
 
@@ -177,7 +173,7 @@ export default function RoutineList({ session }) {
 
       <ListGroup>
         {TASKS.map((label, i) => {
-          const id = i + 1;                       // ← 1-based id 정의
+          const id = i + 1; // ← 1-based id 정의
           return (
             <ListGroup.Item
               key={id}
@@ -192,7 +188,9 @@ export default function RoutineList({ session }) {
                 className="me-2"
                 onChange={() => toggleStep(id)}
               />
-              <span style={{ textDecoration: steps[id] ? "line-through" : "none" }}>
+              <span
+                style={{ textDecoration: steps[id] ? "line-through" : "none" }}
+              >
                 {label}
               </span>
             </ListGroup.Item>

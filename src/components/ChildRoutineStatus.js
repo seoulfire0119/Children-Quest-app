@@ -8,22 +8,9 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
-<<<<<<< HEAD
-import getLocalDateKey from "../utils/getLocalDateKey";
-import { Card, Badge, ListGroup, Spinner, Button } from "react-bootstrap";
-import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks.js";
-=======
-import {
-  Card,
-  Badge,
-  ListGroup,
-  Spinner,
-  Button,
-  Form,
-} from "react-bootstrap";
+import { Card, Badge, ListGroup, Spinner, Button, Form } from "react-bootstrap";
 import getLocalDateKey from "../utils/getLocalDateKey";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks";
->>>>>>> 8af2c2e60d1a0314e8fea7552eb419cb9c7a348b
 import RoutineEditModal from "./RoutineEditModal";
 
 /* ───────────────────────────────────────────
@@ -45,14 +32,12 @@ const emptyDailyStatus = (tasks) => {
    Component
    ─────────────────────────────────────────── */
 export default function ChildRoutineStatus({ childUid }) {
-  const [routine, setRoutine] = useState(emptyDailyStatus(DEFAULT_ROUTINE_TASKS));
+  const [routine, setRoutine] = useState(
+    emptyDailyStatus(DEFAULT_ROUTINE_TASKS)
+  );
   const [tasks, setTasks] = useState(DEFAULT_ROUTINE_TASKS);
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
-<<<<<<< HEAD
-  const today = getLocalDateKey();
-=======
->>>>>>> 8af2c2e60d1a0314e8fea7552eb419cb9c7a348b
 
   const today = getLocalDateKey(); // e.g. 2025‑05‑29
 
@@ -79,7 +64,8 @@ export default function ChildRoutineStatus({ childUid }) {
         // tasks config
         if (cfgSnap.exists()) {
           setTasks({
-            morning: cfgSnap.data().tasks_morning || DEFAULT_ROUTINE_TASKS.morning,
+            morning:
+              cfgSnap.data().tasks_morning || DEFAULT_ROUTINE_TASKS.morning,
             afternoon:
               cfgSnap.data().tasks_afternoon || DEFAULT_ROUTINE_TASKS.afternoon,
           });
@@ -148,7 +134,9 @@ export default function ChildRoutineStatus({ childUid }) {
         <ListGroup.Item
           key={`${key}-${i}`}
           action
-          className={`d-flex align-items-center ${done ? "list-group-item-success" : ""}`}
+          className={`d-flex align-items-center ${
+            done ? "list-group-item-success" : ""
+          }`}
           onClick={() => toggleStep(key, i)}
         >
           <Form.Check
@@ -158,7 +146,10 @@ export default function ChildRoutineStatus({ childUid }) {
             className="me-2"
           />
           <span
-            style={{ textDecoration: done ? "line-through" : "none", flexGrow: 1 }}
+            style={{
+              textDecoration: done ? "line-through" : "none",
+              flexGrow: 1,
+            }}
           >
             {label}
           </span>
@@ -192,7 +183,11 @@ export default function ChildRoutineStatus({ childUid }) {
               완료 {routine.morning.completedCount || 0}/{tasks.morning.length}
             </Badge>
           </span>
-          <Button size="sm" variant="outline-primary" onClick={() => setShowEdit(true)}>
+          <Button
+            size="sm"
+            variant="outline-primary"
+            onClick={() => setShowEdit(true)}
+          >
             루틴 수정
           </Button>
         </Card.Header>
@@ -205,7 +200,8 @@ export default function ChildRoutineStatus({ childUid }) {
           <span>
             🌆 하교 후 루틴
             <Badge bg="primary" pill className="ms-2">
-              완료 {routine.afternoon.completedCount || 0}/{tasks.afternoon.length}
+              완료 {routine.afternoon.completedCount || 0}/
+              {tasks.afternoon.length}
             </Badge>
           </span>
         </Card.Header>
