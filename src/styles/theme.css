@@ -95,19 +95,6 @@ hr                 { border-top:1px solid var(--bg-hover); }
 
 #market-tab {background-color: #ffffff;}
 
-/* 네 번째 <div> 안에 있는 첫 번째 버튼 */
-div:nth-of-type(4) > div > button:nth-of-type(1) {
-  background: #ffffff !important;   /* 흰 배경 */
-  color: #000;                      /* 글씨색(필요하면) */
-  border-color: transparent;        /* 테두리 제거(선택) */
-}
-
-/* 네 번째 <div> 안에 있는 두 번째 버튼 */
-div:nth-of-type(4) > div > button:nth-of-type(2) {
-  background: #ffffff !important;
-  color: #000;
-  border-color: transparent;
-}
 
 /* 포인트 마켓( single-tab )이 선택된 상태 → 빨간 배경 */
 .single-tab .nav-link.active {

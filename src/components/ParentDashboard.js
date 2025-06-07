@@ -21,7 +21,7 @@ import ChildRoutineStatus from "./ChildRoutineStatus";
 import ChildPoints from "./ChildPoints";
 import UsageRequests from "./UsageRequests";
 import MarketAdmin from "./MarketAdmin";
-import AfterSchoolSchedule from "./AfterSchoolSchedule";
+import AfterSchoolSchedule from "./AfterSchoolSchedule"; // AfterSchoolSchedule을 사용하도록 변경
 
 export default function ParentDashboard() {
   /* ───────── 상태 ───────── */
@@ -125,10 +125,10 @@ export default function ParentDashboard() {
             <MarketAdmin />
           </Tab>
 
-          {/* 방과후 */}
-          <Tab eventKey="afterSchool" title="방과후">
-            <AfterSchoolSchedule />
-          </Tab>
+         <Tab eventKey="afterSchool" title="방과후">
+  {/* 이제 AfterSchoolSchedule 컴포넌트를 '수정 가능 모드'로 사용합니다. */}
+  <AfterSchoolSchedule editable={true} />
+</Tab>
         </Tabs>
       </div>
 

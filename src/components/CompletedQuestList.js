@@ -29,13 +29,14 @@ export default function CompletedQuestList() {
       async (snap) => {
         const data = await Promise.all(
           snap.docs.map(async (d) => {
-            const q = { id: d.id, ...d.data() };
-            // 자녀 이름 조회
-            const childSnap = await getDoc(doc(db, "users", q.assignedTo));
-            q.childName = childSnap.exists()
+            const questData = { id: d.id, ...d.data() };
+            const childSnap = await getDoc(
+              doc(db, "users", questData.assignedTo)
+            );
+            questData.childName = childSnap.exists()
               ? childSnap.data().name
               : "알 수 없음";
-            return q;
+            return questData;
           })
         );
         setQuests(data);
@@ -43,7 +44,8 @@ export default function CompletedQuestList() {
       (err) => console.warn("CompletedQuestList snapshot error:", err)
     );
     return () => unsub();
-  }, [auth.currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const restore = async (id) => {
     await updateDoc(doc(db, "quests", id), { completed: false });

@@ -6,13 +6,14 @@ import { Form, Button } from "react-bootstrap";
 
 export default function AddQuest({ selectedChild }) {
   const [title, setTitle] = useState("");
-  const [points, setPoints] = useState(0);
+  const [points, setPoints] = useState("");
   const [photo, setPhoto] = useState(null);
 
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!title) return alert("제목을 입력하세요!");
     if (!selectedChild) return alert("퀘스트를 받을 아이를 선택하세요!");
+    
     const pts = Number(points);
     if (!Number.isFinite(pts) || pts <= 0) return alert("포인트를 입력하세요!");
 
@@ -39,7 +40,7 @@ export default function AddQuest({ selectedChild }) {
     });
 
     setTitle("");
-    setPoints(0);
+    setPoints("");
     setPhoto(null);
     alert("퀘스트가 생성되었습니다!");
   };
@@ -56,7 +57,7 @@ export default function AddQuest({ selectedChild }) {
       <Form.Control
         type="number"
         className="mb-2"
-        placeholder="원하시는 포인트점수를 적어주세요"
+        placeholder="원하시는 포인트 점수를 적어주세요"
         value={points}
         onChange={(e) => setPoints(e.target.value)}
       />
