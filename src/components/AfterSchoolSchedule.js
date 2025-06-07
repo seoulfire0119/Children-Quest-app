@@ -4,13 +4,6 @@ import { db } from "../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import "../styles/AfterSchool.css";
 
-// Assume db is correctly configured in this path
-// import { db } from "../firebase";
-
-
-
-// Assuming AfterSchool.css exists and provides necessary styles
-
 // ## 변경점 1: 성능 최적화를 위해 상수와 헬퍼 함수를 컴포넌트 밖으로 이동
 const TIMES = ["1시", "2시", "3시", "4시", "5시", "6시", "7시"];
 const DAYS = ["월", "화", "수", "목", "금"];
@@ -87,13 +80,21 @@ export default function AfterSchoolSchedule({ editable }) {
     }
     setEditCell(null);
   };
-  
+
   // ## 변경점 2: DAYS가 문자열 배열이므로, dayKey와 time만 인자로 받음
   // 특정 셀의 편집 모달을 여는 함수
   const openEditor = (day, time) => {
     if (!editable) return;
-    const currentCellData = schedule[day]?.[time] || { text: "", highlight: false };
-    setEditCell({ day, time, text: currentCellData.text, highlight: currentCellData.highlight });
+    const currentCellData = schedule[day]?.[time] || {
+      text: "",
+      highlight: false,
+    };
+    setEditCell({
+      day,
+      time,
+      text: currentCellData.text,
+      highlight: currentCellData.highlight,
+    });
   };
 
   const todayMap = ["일", "월", "화", "수", "목", "금", "토"];
@@ -101,7 +102,10 @@ export default function AfterSchoolSchedule({ editable }) {
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "200px" }}
+      >
         <div>Loading schedule...</div>
       </div>
     );
@@ -110,50 +114,64 @@ export default function AfterSchoolSchedule({ editable }) {
   return (
     <div className="after-school p-3">
       <h2 className="text-center mb-4">방과 후 활동 시간표</h2>
-      <Table bordered className="text-center fs-5 after-school-table shadow-sm">
-        <thead className="table-light">
-          <tr>
-            <th style={{ width: '10%' }}>시간</th>
-            {/* ## 변경점 3: d.key, d.label 대신 d를 직접 사용 */}
-            {DAYS.map((d) => (
-              <th key={d} className={d === today ? "today-col table-info" : ""} style={{ width: '18%' }}>
-                {d}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {TIMES.map((t, i) => (
-            <tr key={t} className={`row-${i + 1}`}>
-              <td className="time-col align-middle">{t}</td>
-              {DAYS.map((d) => {
-                // ## 변경점 4: schedule[d.key] 대신 schedule[d] 사용
-                const cellData = schedule[d]?.[t] || { text: "", highlight: false };
-                return (
-                  <td
-                    key={`${d}-${t}`}
-                    className={`
-                      ${d === today ? "today-col" : ""}
-                      ${cellData.highlight ? "highlight" : ""}
-                      ${editable ? "editable-cell" : ""}
-                      align-middle
-                    `}
-                    // ## 변경점 5: openEditor 인자 수정
-                    onClick={() => openEditor(d, t)}
-                    style={{
-                      cursor: editable ? "pointer" : "default",
-                      minHeight: '60px',
-                      verticalAlign: 'middle'
-                    }}
-                  >
-                    {cellData.text}
-                  </td>
-                );
-              })}
+      {/* ▼▼▼ 이 컨테이너 div가 추가되었습니다 ▼▼▼ */}
+      <div className="table-container">
+        <Table
+          bordered
+          className="text-center fs-5 after-school-table shadow-sm"
+        >
+          <thead className="table-light">
+            <tr>
+              <th style={{ width: "10%" }}>시간</th>
+              {/* ## 변경점 3: d.key, d.label 대신 d를 직접 사용 */}
+              {DAYS.map((d) => (
+                <th
+                  key={d}
+                  className={d === today ? "today-col table-info" : ""}
+                  style={{ width: "18%" }}
+                >
+                  {d}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {TIMES.map((t, i) => (
+              <tr key={t} className={`row-${i + 1}`}>
+                <td className="time-col align-middle">{t}</td>
+                {DAYS.map((d) => {
+                  // ## 변경점 4: schedule[d.key] 대신 schedule[d] 사용
+                  const cellData = schedule[d]?.[t] || {
+                    text: "",
+                    highlight: false,
+                  };
+                  return (
+                    <td
+                      key={`${d}-${t}`}
+                      className={`
+                        ${d === today ? "today-col" : ""}
+                        ${cellData.highlight ? "highlight" : ""}
+                        ${editable ? "editable-cell" : ""}
+                        align-middle
+                      `}
+                      // ## 변경점 5: openEditor 인자 수정
+                      onClick={() => openEditor(d, t)}
+                      style={{
+                        cursor: editable ? "pointer" : "default",
+                        minHeight: "60px",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      {cellData.text}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+      {/* ▲▲▲ 여기까지 ▲▲▲ */}
 
       {/* 시간표 셀 수정을 위한 모달 */}
       {editable && editCell && (
@@ -190,7 +208,10 @@ export default function AfterSchoolSchedule({ editable }) {
             </Modal.Body>
           )}
           <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setEditCell(null)}>
+            <Button
+              variant="outline-secondary"
+              onClick={() => setEditCell(null)}
+            >
               취소
             </Button>
             <Button variant="primary" onClick={saveCell}>
@@ -199,12 +220,13 @@ export default function AfterSchoolSchedule({ editable }) {
           </Modal.Footer>
         </Modal>
       )}
-      
-     {!editable && (
-          <div className="mt-3 p-2 bg-light border rounded small">
-            <p className="mb-1"><strong>참고:</strong> 현재 읽기 전용 모드입니다.</p>
-            {/* Mock DB 관련 코드를 완전히 삭제 */}
-          </div>
+
+      {!editable && (
+        <div className="mt-3 p-2 bg-light border rounded small">
+          <p className="mb-1">
+            <strong>참고:</strong> 현재 읽기 전용 모드입니다.
+          </p>
+        </div>
       )}
     </div>
   );
