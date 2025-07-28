@@ -62,33 +62,33 @@ export default function ChildRoutineStatus({ childUid }) {
         ]);
 
         // tasks config
-        if (cfgSnap.exists()) {
-          setTasks({
-            morning:
-              cfgSnap.data().tasks_morning || DEFAULT_ROUTINE_TASKS.morning,
-            afternoon:
-              cfgSnap.data().tasks_afternoon || DEFAULT_ROUTINE_TASKS.afternoon,
-          });
-        } else {
-          setTasks(DEFAULT_ROUTINE_TASKS);
-        }
+        const newTasks = cfgSnap.exists()
+          ? {
+              morning:
+                cfgSnap.data().tasks_morning || DEFAULT_ROUTINE_TASKS.morning,
+              afternoon:
+                cfgSnap.data().tasks_afternoon ||
+                DEFAULT_ROUTINE_TASKS.afternoon,
+            }
+          : DEFAULT_ROUTINE_TASKS;
+        setTasks(newTasks);
 
         // daily status
         if (dailySnap.exists()) {
           setRoutine((prev) => ({ ...prev, ...dailySnap.data() }));
         } else {
-          setRoutine(emptyDailyStatus(tasks));
+          setRoutine(emptyDailyStatus(newTasks));
         }
       } catch (err) {
         console.error("child routine load", err);
-        setRoutine(emptyDailyStatus(tasks));
+        setRoutine(emptyDailyStatus(DEFAULT_ROUTINE_TASKS));
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [childUid, today, tasks]);
+  }, [childUid, today]);
 
   /* ── toggle step ──────────────────────── */
   const toggleStep = async (sessionKey, taskIdx) => {
@@ -225,6 +225,7 @@ export default function ChildRoutineStatus({ childUid }) {
               { merge: true }
             );
             setTasks(updated);
+            setRoutine(emptyDailyStatus(updated));
             setShowEdit(false);
           } catch (err) {
             console.error("save routine tasks", err);
