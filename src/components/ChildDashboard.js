@@ -9,6 +9,7 @@ import RoutineList from "./RoutineList";
 import PurchaseMarket from "./PurchaseMarket";
 import ChildPoints from "./ChildPoints";
 import AfterSchoolSchedule from "./AfterSchoolSchedule";
+import DEFAULT_ROUTINE_USAGE from "./defaultRoutineUsage";
 import "../styles/PurchaseMarket.css";
 
 export default function ChildDashboard() {
@@ -18,6 +19,7 @@ export default function ChildDashboard() {
   const [reqExists, setReqExists] = useState(false);
   const [showMarket, setShowMarket] = useState(false); // 마켓 뷰 토글
   const [invOpen, setInvOpen] = useState(false); // 인벤토리 토글
+  const [useFlags, setUseFlags] = useState(DEFAULT_ROUTINE_USAGE);
 
   /* ──────────────── 초기 데이터 로드 ──────────────── */
   useEffect(() => {
@@ -39,6 +41,34 @@ export default function ChildDashboard() {
 
       const rqSnap = await getDoc(doc(db, "linkReq", auth.currentUser.uid));
       setReqExists(rqSnap.exists() && rqSnap.data().status === "pending");
+      try {
+        const routineSnap = await getDoc(
+          doc(db, "routines", auth.currentUser.uid)
+        );
+        if (routineSnap.exists()) {
+          const r = routineSnap.data();
+          setUseFlags({
+            morning:
+              r.use_morning !== undefined
+                ? r.use_morning
+                : DEFAULT_ROUTINE_USAGE.morning,
+            afternoon:
+              r.use_afternoon !== undefined
+                ? r.use_afternoon
+                : DEFAULT_ROUTINE_USAGE.afternoon,
+            vacation:
+              r.use_vacation !== undefined
+                ? r.use_vacation
+                : DEFAULT_ROUTINE_USAGE.vacation,
+            optional:
+              r.use_optional !== undefined
+                ? r.use_optional
+                : DEFAULT_ROUTINE_USAGE.optional,
+          });
+        }
+      } catch (e) {
+        console.error("load routine usage", e);
+      }
     })();
   }, []);
 
@@ -129,22 +159,33 @@ export default function ChildDashboard() {
 
         {/* ────── 2. 퀘스트 & 루틴 탭 ────── */}
         {!showMarket && (
-          <Tabs
-            defaultActiveKey="ongoing"
-            className="mb-3 two-row-tabs" /* ← 추가 */
-          >
+          <Tabs defaultActiveKey="ongoing" className="mb-3 two-row-tabs">
             <Tab eventKey="ongoing" title="🏃 진행중 퀘스트">
               <QuestList />
             </Tab>
             <Tab eventKey="completed" title="✅ 완료한 퀘스트">
               <CompletedQuestList />
             </Tab>
-            <Tab eventKey="morning" title="🌅 등교 전">
-              <RoutineList session="morning" />
-            </Tab>
-            <Tab eventKey="afternoon" title="🌆 하교 후">
-              <RoutineList session="afternoon" />
-            </Tab>
+            {useFlags.morning && (
+              <Tab eventKey="morning" title="🌅 등교 전">
+                <RoutineList session="morning" />
+              </Tab>
+            )}
+            {useFlags.afternoon && (
+              <Tab eventKey="afternoon" title="🌆 하교 후">
+                <RoutineList session="afternoon" />
+              </Tab>
+            )}
+            {useFlags.vacation && (
+              <Tab eventKey="vacation" title="🏖️ 방학 퀘스트">
+                <RoutineList session="vacation" />
+              </Tab>
+            )}
+            {useFlags.optional && (
+              <Tab eventKey="optional" title="🎲 선택 퀘스트">
+                <RoutineList session="optional" />
+              </Tab>
+            )}
             <Tab eventKey="afterSchool" title="방과후">
               <AfterSchoolSchedule />
             </Tab>

@@ -23,6 +23,8 @@ const DEFAULT_ROUTINE_TASKS = {
     "학교 이야기해주기",
     "부모님 도와드리기",
   ],
+  vacation: ["아침 운동하기", "책 읽기"],
+  optional: ["오늘의 감사한 일 적기"],
 };
 
 export default DEFAULT_ROUTINE_TASKS;

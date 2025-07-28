@@ -11,6 +11,7 @@ import { db } from "../firebase";
 import { Card, Badge, ListGroup, Spinner, Button, Form } from "react-bootstrap";
 import getLocalDateKey from "../utils/getLocalDateKey";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks";
+import DEFAULT_ROUTINE_USAGE from "./defaultRoutineUsage";
 import RoutineEditModal from "./RoutineEditModal";
 
 /* ───────────────────────────────────────────
@@ -36,8 +37,9 @@ export default function ChildRoutineStatus({ childUid }) {
     emptyDailyStatus(DEFAULT_ROUTINE_TASKS)
   );
   const [tasks, setTasks] = useState(DEFAULT_ROUTINE_TASKS);
-  const [loading, setLoading] = useState(true);
+  const [useFlags, setUseFlags] = useState(DEFAULT_ROUTINE_USAGE);
   const [showEdit, setShowEdit] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const today = getLocalDateKey(); // e.g. 2025‑05‑29
 
@@ -69,9 +71,35 @@ export default function ChildRoutineStatus({ childUid }) {
               afternoon:
                 cfgSnap.data().tasks_afternoon ||
                 DEFAULT_ROUTINE_TASKS.afternoon,
+              vacation:
+                cfgSnap.data().tasks_vacation || DEFAULT_ROUTINE_TASKS.vacation,
+              optional:
+                cfgSnap.data().tasks_optional || DEFAULT_ROUTINE_TASKS.optional,
             }
           : DEFAULT_ROUTINE_TASKS;
         setTasks(newTasks);
+
+        const newUse = cfgSnap.exists()
+          ? {
+              morning:
+                cfgSnap.data().use_morning !== undefined
+                  ? cfgSnap.data().use_morning
+                  : DEFAULT_ROUTINE_USAGE.morning,
+              afternoon:
+                cfgSnap.data().use_afternoon !== undefined
+                  ? cfgSnap.data().use_afternoon
+                  : DEFAULT_ROUTINE_USAGE.afternoon,
+              vacation:
+                cfgSnap.data().use_vacation !== undefined
+                  ? cfgSnap.data().use_vacation
+                  : DEFAULT_ROUTINE_USAGE.vacation,
+              optional:
+                cfgSnap.data().use_optional !== undefined
+                  ? cfgSnap.data().use_optional
+                  : DEFAULT_ROUTINE_USAGE.optional,
+            }
+          : DEFAULT_ROUTINE_USAGE;
+        setUseFlags(newUse);
 
         // daily status
         if (dailySnap.exists()) {
@@ -172,47 +200,87 @@ export default function ChildRoutineStatus({ childUid }) {
 
   return (
     <div className="p-3">
-      <h4 className="mb-3">오늘의 루틴 ({today})</h4>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="mb-0">오늘의 루틴 ({today})</h4>
+        <Button
+          size="sm"
+          variant="outline-primary"
+          onClick={() => setShowEdit(true)}
+        >
+          루틴 수정
+        </Button>
+      </div>
 
-      {/* morning card */}
-      <Card className="mb-4 shadow-sm">
-        <Card.Header className="d-flex justify-content-between align-items-center">
-          <span>
-            🌅 등교 전 루틴
-            <Badge bg="primary" pill className="ms-2">
-              완료 {routine.morning.completedCount || 0}/{tasks.morning.length}
-            </Badge>
-          </span>
-          <Button
-            size="sm"
-            variant="outline-primary"
-            onClick={() => setShowEdit(true)}
-          >
-            루틴 수정
-          </Button>
-        </Card.Header>
-        <ListGroup variant="flush">{renderTasks("morning")}</ListGroup>
-      </Card>
+      {useFlags.morning && (
+        <Card className="mb-4 shadow-sm">
+          <Card.Header className="d-flex justify-content-between align-items-center">
+            <span>
+              🌅 등교 전 루틴
+              <Badge bg="primary" pill className="ms-2">
+                완료 {routine.morning.completedCount || 0}/
+                {tasks.morning.length}
+              </Badge>
+            </span>
+          </Card.Header>
+          <ListGroup variant="flush">{renderTasks("morning")}</ListGroup>
+        </Card>
+      )}
 
-      {/* afternoon card */}
-      <Card className="shadow-sm">
-        <Card.Header className="d-flex justify-content-between align-items-center">
-          <span>
-            🌆 하교 후 루틴
-            <Badge bg="primary" pill className="ms-2">
-              완료 {routine.afternoon.completedCount || 0}/
-              {tasks.afternoon.length}
-            </Badge>
-          </span>
-        </Card.Header>
-        <ListGroup variant="flush">{renderTasks("afternoon")}</ListGroup>
-      </Card>
+      {useFlags.afternoon && (
+        <Card className="mb-4 shadow-sm">
+          <Card.Header className="d-flex justify-content-between align-items-center">
+            <span>
+              🌆 하교 후 루틴
+              <Badge bg="primary" pill className="ms-2">
+                완료 {routine.afternoon.completedCount || 0}/
+                {tasks.afternoon.length}
+              </Badge>
+            </span>
+          </Card.Header>
+          <ListGroup variant="flush">{renderTasks("afternoon")}</ListGroup>
+        </Card>
+      )}
 
+      {useFlags.vacation && (
+        <Card className="mb-4 shadow-sm">
+          <Card.Header className="d-flex justify-content-between align-items-center">
+            <span>
+              🏖️ 방학 퀘스트
+              <Badge bg="primary" pill className="ms-2">
+                완료 {routine.vacation.completedCount || 0}/
+                {tasks.vacation.length}
+              </Badge>
+            </span>
+          </Card.Header>
+          <ListGroup variant="flush">{renderTasks("vacation")}</ListGroup>
+        </Card>
+      )}
+
+      {useFlags.optional && (
+        <Card className="shadow-sm">
+          <Card.Header className="d-flex justify-content-between align-items-center">
+            <span>
+              🎲 선택 퀘스트
+              <Badge bg="primary" pill className="ms-2">
+                완료 {routine.optional.completedCount || 0}/
+                {tasks.optional.length}
+              </Badge>
+            </span>
+          </Card.Header>
+          <ListGroup variant="flush">{renderTasks("optional")}</ListGroup>
+        </Card>
+      )}
       {/* edit modal */}
       <RoutineEditModal
         show={showEdit}
         onHide={() => setShowEdit(false)}
-        tasks={tasks}
+        config={{
+          ...tasks,
+          useMorning: useFlags.morning,
+          useAfternoon: useFlags.afternoon,
+          useVacation: useFlags.vacation,
+          useOptional: useFlags.optional,
+        }}
         onSave={async (updated) => {
           try {
             await setDoc(
@@ -220,12 +288,36 @@ export default function ChildRoutineStatus({ childUid }) {
               {
                 tasks_morning: updated.morning,
                 tasks_afternoon: updated.afternoon,
+                tasks_vacation: updated.vacation,
+                tasks_optional: updated.optional,
+                use_morning: updated.useMorning,
+                use_afternoon: updated.useAfternoon,
+                use_vacation: updated.useVacation,
+                use_optional: updated.useOptional,
                 updatedAt: Timestamp.now(),
               },
               { merge: true }
             );
-            setTasks(updated);
-            setRoutine(emptyDailyStatus(updated));
+            setTasks({
+              morning: updated.morning,
+              afternoon: updated.afternoon,
+              vacation: updated.vacation,
+              optional: updated.optional,
+            });
+            setUseFlags({
+              morning: updated.useMorning,
+              afternoon: updated.useAfternoon,
+              vacation: updated.useVacation,
+              optional: updated.useOptional,
+            });
+            setRoutine(
+              emptyDailyStatus({
+                morning: updated.morning,
+                afternoon: updated.afternoon,
+                vacation: updated.vacation,
+                optional: updated.optional,
+              })
+            );
             setShowEdit(false);
           } catch (err) {
             console.error("save routine tasks", err);

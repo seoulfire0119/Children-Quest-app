@@ -29,11 +29,7 @@ const createInitialState = (tasks) => {
 export default function RoutineList({ session }) {
   /* task list (configurable) */
   const uid = auth.currentUser?.uid;
-  const [TASKS, setTASKS] = useState(
-    session === "morning"
-      ? DEFAULT_ROUTINE_TASKS.morning
-      : DEFAULT_ROUTINE_TASKS.afternoon
-  );
+  const [TASKS, setTASKS] = useState(DEFAULT_ROUTINE_TASKS[session] || []);
 
   useEffect(() => {
     if (!uid) return;
@@ -43,10 +39,10 @@ export default function RoutineList({ session }) {
         if (snap.exists()) {
           const d = snap.data();
           setTASKS(
-            session === "morning"
-              ? d.tasks_morning || DEFAULT_ROUTINE_TASKS.morning
-              : d.tasks_afternoon || DEFAULT_ROUTINE_TASKS.afternoon
+            d[`tasks_${session}`] || DEFAULT_ROUTINE_TASKS[session] || []
           );
+        } else {
+          setTASKS(DEFAULT_ROUTINE_TASKS[session] || []);
         }
       } catch (e) {
         console.error("Load routine config", e);
@@ -90,19 +86,16 @@ export default function RoutineList({ session }) {
             });
           }
         } else {
+          const base = {
+            morning: createInitialState(DEFAULT_ROUTINE_TASKS.morning),
+            afternoon: createInitialState(DEFAULT_ROUTINE_TASKS.afternoon),
+            vacation: createInitialState(DEFAULT_ROUTINE_TASKS.vacation),
+            optional: createInitialState(DEFAULT_ROUTINE_TASKS.optional),
+          };
+          base[session] = initialState;
           await setDoc(
             docRef,
-            {
-              morning:
-                session === "morning"
-                  ? initialState
-                  : createInitialState(DEFAULT_ROUTINE_TASKS.morning),
-              afternoon:
-                session === "afternoon"
-                  ? initialState
-                  : createInitialState(DEFAULT_ROUTINE_TASKS.afternoon),
-              updatedAt: Timestamp.now(),
-            },
+            { ...base, updatedAt: Timestamp.now() },
             { merge: true }
           );
         }
@@ -162,10 +155,17 @@ export default function RoutineList({ session }) {
   if (!uid) return null;
   if (loading) return <Spinner animation="border" />;
 
+  const labels = {
+    morning: "🌅 등교 전 루틴",
+    afternoon: "🌆 하교 후 루틴",
+    vacation: "🏖️ 방학 퀘스트",
+    optional: "🎲 선택 퀘스트",
+  };
+
   return (
     <div className="mb-4">
       <h5>
-        {session === "morning" ? "🌅 등교 전 루틴" : "🌆 하교 후 루틴"}{" "}
+        {labels[session] || ""}{" "}
         <Badge bg="secondary">
           {steps.completedCount} / {TASKS.length}
         </Badge>
