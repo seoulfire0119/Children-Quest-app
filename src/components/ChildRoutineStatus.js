@@ -12,6 +12,7 @@ import { Card, Badge, ListGroup, Spinner, Button, Form } from "react-bootstrap";
 import getLocalDateKey from "../utils/getLocalDateKey";
 import DEFAULT_ROUTINE_TASKS from "./defaultRoutineTasks";
 import DEFAULT_ROUTINE_USAGE from "./defaultRoutineUsage";
+import DEFAULT_ROUTINE_POINTS from "./defaultRoutinePoints";
 import RoutineEditModal from "./RoutineEditModal";
 
 /* ───────────────────────────────────────────
@@ -37,6 +38,26 @@ export default function ChildRoutineStatus({ childUid }) {
     emptyDailyStatus(DEFAULT_ROUTINE_TASKS)
   );
   const [tasks, setTasks] = useState(DEFAULT_ROUTINE_TASKS);
+  const [points, setPoints] = useState({
+    morning: DEFAULT_ROUTINE_TASKS.morning.map(
+      () => DEFAULT_ROUTINE_POINTS.morning
+    ),
+    afternoon: DEFAULT_ROUTINE_TASKS.afternoon.map(
+      () => DEFAULT_ROUTINE_POINTS.afternoon
+    ),
+    vacation: DEFAULT_ROUTINE_TASKS.vacation.map(
+      () => DEFAULT_ROUTINE_POINTS.vacation
+    ),
+    optional: DEFAULT_ROUTINE_TASKS.optional.map(
+      () => DEFAULT_ROUTINE_POINTS.optional
+    ),
+  });
+  const [pointsBase, setPointsBase] = useState({
+    morning: DEFAULT_ROUTINE_POINTS.morning,
+    afternoon: DEFAULT_ROUTINE_POINTS.afternoon,
+    vacation: DEFAULT_ROUTINE_POINTS.vacation,
+    optional: DEFAULT_ROUTINE_POINTS.optional,
+  });
   const [useFlags, setUseFlags] = useState(DEFAULT_ROUTINE_USAGE);
   const [showEdit, setShowEdit] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,6 +69,26 @@ export default function ChildRoutineStatus({ childUid }) {
     if (!childUid) {
       setRoutine(emptyDailyStatus(DEFAULT_ROUTINE_TASKS));
       setTasks(DEFAULT_ROUTINE_TASKS);
+      setPoints({
+        morning: DEFAULT_ROUTINE_TASKS.morning.map(
+          () => DEFAULT_ROUTINE_POINTS.morning
+        ),
+        afternoon: DEFAULT_ROUTINE_TASKS.afternoon.map(
+          () => DEFAULT_ROUTINE_POINTS.afternoon
+        ),
+        vacation: DEFAULT_ROUTINE_TASKS.vacation.map(
+          () => DEFAULT_ROUTINE_POINTS.vacation
+        ),
+        optional: DEFAULT_ROUTINE_TASKS.optional.map(
+          () => DEFAULT_ROUTINE_POINTS.optional
+        ),
+      });
+      setPointsBase({
+        morning: DEFAULT_ROUTINE_POINTS.morning,
+        afternoon: DEFAULT_ROUTINE_POINTS.afternoon,
+        vacation: DEFAULT_ROUTINE_POINTS.vacation,
+        optional: DEFAULT_ROUTINE_POINTS.optional,
+      });
       setLoading(false);
       return;
     }
@@ -78,6 +119,46 @@ export default function ChildRoutineStatus({ childUid }) {
             }
           : DEFAULT_ROUTINE_TASKS;
         setTasks(newTasks);
+
+        // points config
+        const def = DEFAULT_ROUTINE_POINTS;
+        const newPoints = cfgSnap.exists()
+          ? {
+              morning:
+                cfgSnap.data().points_morning ||
+                newTasks.morning.map(() => def.morning),
+              afternoon:
+                cfgSnap.data().points_afternoon ||
+                newTasks.afternoon.map(() => def.afternoon),
+              vacation:
+                cfgSnap.data().points_vacation ||
+                newTasks.vacation.map(() => def.vacation),
+              optional:
+                cfgSnap.data().points_optional ||
+                newTasks.optional.map(() => def.optional),
+            }
+          : {
+              morning: newTasks.morning.map(() => def.morning),
+              afternoon: newTasks.afternoon.map(() => def.afternoon),
+              vacation: newTasks.vacation.map(() => def.vacation),
+              optional: newTasks.optional.map(() => def.optional),
+            };
+        setPoints(newPoints);
+
+        const newBase = cfgSnap.exists()
+          ? {
+              morning: cfgSnap.data().points_base_morning ?? def.morning,
+              afternoon: cfgSnap.data().points_base_afternoon ?? def.afternoon,
+              vacation: cfgSnap.data().points_base_vacation ?? def.vacation,
+              optional: cfgSnap.data().points_base_optional ?? def.optional,
+            }
+          : {
+              morning: def.morning,
+              afternoon: def.afternoon,
+              vacation: def.vacation,
+              optional: def.optional,
+            };
+        setPointsBase(newBase);
 
         const newUse = cfgSnap.exists()
           ? {
@@ -144,7 +225,11 @@ export default function ChildRoutineStatus({ childUid }) {
       );
 
       // update points
-      const delta = newStatus ? 20 : -20;
+      const val =
+        points[sessionKey]?.[taskIdx - 1] ||
+        DEFAULT_ROUTINE_POINTS[sessionKey] ||
+        0;
+      const delta = newStatus ? val : -val;
       await updateDoc(doc(db, "users", childUid), {
         points: increment(delta),
       });
@@ -270,12 +355,21 @@ export default function ChildRoutineStatus({ childUid }) {
           <ListGroup variant="flush">{renderTasks("optional")}</ListGroup>
         </Card>
       )}
+
       {/* edit modal */}
       <RoutineEditModal
         show={showEdit}
         onHide={() => setShowEdit(false)}
         config={{
           ...tasks,
+          pointsMorning: points.morning,
+          pointsAfternoon: points.afternoon,
+          pointsVacation: points.vacation,
+          pointsOptional: points.optional,
+          pointsMorningBase: pointsBase.morning,
+          pointsAfternoonBase: pointsBase.afternoon,
+          pointsVacationBase: pointsBase.vacation,
+          pointsOptionalBase: pointsBase.optional,
           useMorning: useFlags.morning,
           useAfternoon: useFlags.afternoon,
           useVacation: useFlags.vacation,
@@ -290,6 +384,14 @@ export default function ChildRoutineStatus({ childUid }) {
                 tasks_afternoon: updated.afternoon,
                 tasks_vacation: updated.vacation,
                 tasks_optional: updated.optional,
+                points_morning: updated.pointsMorning,
+                points_afternoon: updated.pointsAfternoon,
+                points_vacation: updated.pointsVacation,
+                points_optional: updated.pointsOptional,
+                points_base_morning: updated.pointsMorningBase,
+                points_base_afternoon: updated.pointsAfternoonBase,
+                points_base_vacation: updated.pointsVacationBase,
+                points_base_optional: updated.pointsOptionalBase,
                 use_morning: updated.useMorning,
                 use_afternoon: updated.useAfternoon,
                 use_vacation: updated.useVacation,
@@ -303,6 +405,18 @@ export default function ChildRoutineStatus({ childUid }) {
               afternoon: updated.afternoon,
               vacation: updated.vacation,
               optional: updated.optional,
+            });
+            setPoints({
+              morning: updated.pointsMorning,
+              afternoon: updated.pointsAfternoon,
+              vacation: updated.pointsVacation,
+              optional: updated.pointsOptional,
+            });
+            setPointsBase({
+              morning: updated.pointsMorningBase,
+              afternoon: updated.pointsAfternoonBase,
+              vacation: updated.pointsVacationBase,
+              optional: updated.pointsOptionalBase,
             });
             setUseFlags({
               morning: updated.useMorning,

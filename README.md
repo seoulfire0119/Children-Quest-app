@@ -4,7 +4,7 @@
 
 ## Quest Points
 
-Parents can assign a numeric point value when creating a quest. When a child marks the quest as completed, those points are automatically added to their total. Point values are shown with a "점" suffix on quest lists.
+Parents can assign a numeric point value when creating a quest. When a child marks the quest as completed, those points are automatically added to their total. Point values are shown with a "점" suffix on quest lists. Children can also upload a photo or video when completing a quest or routine task. Uploaded proof files are stored in Firebase Storage and shown in completion lists.
 
 # Getting Started with Create React App
 
