@@ -69,21 +69,37 @@ export default function CompletedQuestList() {
               {q.photoUrl && (
                 <>
                   <h6>원본 사진</h6>
-                  <img
-                    src={q.photoUrl}
-                    alt=""
-                    style={{ width: "100%", borderRadius: 6 }}
-                  />
+                  {/\.mp4|\.mov|\.webm|\.ogg$/i.test(q.photoUrl) ? (
+                    <video
+                      src={q.photoUrl}
+                      controls
+                      style={{ width: "100%", borderRadius: 6 }}
+                    />
+                  ) : (
+                    <img
+                      src={q.photoUrl}
+                      alt=""
+                      style={{ width: "100%", borderRadius: 6 }}
+                    />
+                  )}
                 </>
               )}
               {q.proofUrl && (
                 <>
                   <h6 className="mt-3">내가 제출한 증빙 사진</h6>
-                  <img
-                    src={q.proofUrl}
-                    alt=""
-                    style={{ width: "100%", borderRadius: 6 }}
-                  />
+                  {/\.mp4|\.mov|\.webm|\.ogg$/i.test(q.proofUrl) ? (
+                    <video
+                      src={q.proofUrl}
+                      controls
+                      style={{ width: "100%", borderRadius: 6 }}
+                    />
+                  ) : (
+                    <img
+                      src={q.proofUrl}
+                      alt=""
+                      style={{ width: "100%", borderRadius: 6 }}
+                    />
+                  )}
                 </>
               )}
               {typeof q.points === "number" && (

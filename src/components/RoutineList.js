@@ -79,6 +79,7 @@ export default function RoutineList({ session }) {
   const [loading, setLoading] = useState(true);
   const [openId, setOpenId] = useState(null);
   const [proofFiles, setProofFiles] = useState({});
+  const [processing, setProcessing] = useState({});
   const today = getLocalDateKey();
   const docRef = uid && doc(db, "routines", uid, "daily", today);
 
@@ -137,7 +138,9 @@ export default function RoutineList({ session }) {
 
   /* toggle */
   const toggleStep = async (idx) => {
-    if (!uid) return;
+    if (!uid || processing[idx]) return;
+    setProcessing((p) => ({ ...p, [idx]: true }));
+
     try {
       const userRef = doc(db, "users", uid);
 
@@ -194,6 +197,8 @@ export default function RoutineList({ session }) {
     } catch (e) {
       console.error("Toggle step", e);
       setSteps(steps); // rollback
+    } finally {
+      setProcessing((p) => ({ ...p, [idx]: false }));
     }
   };
 
@@ -251,9 +256,18 @@ export default function RoutineList({ session }) {
               <Card.Body>
                 {proofUrl && (
                   <div className="mb-2">
-                    <Image src={proofUrl} fluid rounded />
+                    {/\.mp4|\.mov|\.webm|\.ogg$/i.test(proofUrl) ? (
+                      <video
+                        src={proofUrl}
+                        controls
+                        style={{ width: "100%", borderRadius: 6 }}
+                      />
+                    ) : (
+                      <Image src={proofUrl} fluid rounded />
+                    )}
                   </div>
                 )}
+                <Form.Label className="mb-1">증거물 업로드</Form.Label>
                 <Form.Control
                   type="file"
                   accept="image/*,video/*"
@@ -264,6 +278,7 @@ export default function RoutineList({ session }) {
                 />
                 <Button
                   variant={done ? "secondary" : "success"}
+                  disabled={processing[id]}
                   onClick={() => toggleStep(id)}
                 >
                   {done ? "완료 취소" : "완료"}

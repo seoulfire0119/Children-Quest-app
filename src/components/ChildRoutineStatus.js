@@ -243,6 +243,7 @@ export default function ChildRoutineStatus({ childUid }) {
     tasks[key]?.map((label, idx) => {
       const i = idx + 1;
       const done = routine[key]?.[i] || false;
+      const proofUrl = routine[key]?.proofUrls?.[i];
       return (
         <ListGroup.Item
           key={`${key}-${i}`}
@@ -270,6 +271,19 @@ export default function ChildRoutineStatus({ childUid }) {
             <Badge bg="success" pill className="ms-auto">
               완료
             </Badge>
+          )}
+          {proofUrl && (
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              className="ms-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(proofUrl, "_blank");
+              }}
+            >
+              증거보기
+            </Button>
           )}
         </ListGroup.Item>
       );
