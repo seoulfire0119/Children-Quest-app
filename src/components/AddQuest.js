@@ -13,7 +13,7 @@ export default function AddQuest({ selectedChild }) {
     e.preventDefault();
     if (!title) return alert("제목을 입력하세요!");
     if (!selectedChild) return alert("퀘스트를 받을 아이를 선택하세요!");
-    
+
     const pts = Number(points);
     if (!Number.isFinite(pts) || pts <= 0) return alert("포인트를 입력하세요!");
 
@@ -36,7 +36,9 @@ export default function AddQuest({ selectedChild }) {
       createdAt: Timestamp.now(),
       completed: false,
       revisionRequested: false,
-      pointsAwarded: false,
+      pointsAwardedCount: 0,
+      uploadCount: 0,
+      proofUrls: [],
     });
 
     setTitle("");

@@ -81,22 +81,31 @@ export default function ParentQuestList() {
                   )}
                 </>
               )}
-              {q.proofUrl && (
+              {Array.isArray(q.proofUrls) && q.proofUrls.length > 0 && (
                 <>
-                  <h6>제출된 증빙 사진</h6>
-                  {/\.mp4|\.mov|\.webm|\.ogg$/i.test(q.proofUrl) ? (
-                    <video
-                      src={q.proofUrl}
-                      controls
-                      style={{ width: "100%", borderRadius: 6 }}
-                      className="mb-3"
-                    />
-                  ) : (
-                    <Image src={q.proofUrl} fluid rounded className="mb-3" />
-                  )}
+                  <h6>제출된 증빙 자료</h6>
+                  {q.proofUrls.map((url, idx) => (
+                    <div className="mb-2" key={idx}>
+                      {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
+                        <video
+                          src={url}
+                          controls
+                          style={{ width: "100%", borderRadius: 6 }}
+                          className="mb-3"
+                        />
+                      ) : (
+                        <Image src={url} fluid rounded className="mb-3" />
+                      )}
+                    </div>
+                  ))}
                 </>
               )}
-              {typeof q.points === "number" && <p>포인트: {q.points}점</p>}
+              {typeof q.points === "number" && (
+                <p>
+                  포인트: {q.points}점 (업로드{" "}
+                  {q.pointsAwardedCount || q.uploadCount || 0}/3회)
+                </p>
+              )}
               {q.completed && !q.revisionRequested && (
                 <Button
                   variant="outline-danger"

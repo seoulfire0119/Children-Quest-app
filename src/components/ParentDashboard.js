@@ -22,6 +22,9 @@ import ChildPoints from "./ChildPoints";
 import UsageRequests from "./UsageRequests";
 import MarketAdmin from "./MarketAdmin";
 import AfterSchoolSchedule from "./AfterSchoolSchedule"; // AfterSchoolSchedule을 사용하도록 변경
+import pkg from "../../package.json";
+
+const APP_VERSION = pkg.version;
 
 export default function ParentDashboard() {
   /* ───────── 상태 ───────── */
@@ -55,7 +58,7 @@ export default function ParentDashboard() {
       {/* ── 헤더 ───────────────────────────────────── */}
       <Row className="align-items-center mb-3">
         <Col>
-          <h2 className="m-0">👨‍👩‍👧 부모 대시보드</h2>
+          <h2 className="m-0">👨‍👩‍👧 부모 대시보드 v{APP_VERSION}</h2>
           <small>
             <strong>로그인:</strong> {name} ({auth.currentUser.email})
           </small>
@@ -125,10 +128,10 @@ export default function ParentDashboard() {
             <MarketAdmin />
           </Tab>
 
-         <Tab eventKey="afterSchool" title="방과후">
-  {/* 이제 AfterSchoolSchedule 컴포넌트를 '수정 가능 모드'로 사용합니다. */}
-  <AfterSchoolSchedule editable={true} />
-</Tab>
+          <Tab eventKey="afterSchool" title="방과후">
+            {/* 이제 AfterSchoolSchedule 컴포넌트를 '수정 가능 모드'로 사용합니다. */}
+            <AfterSchoolSchedule editable={true} />
+          </Tab>
         </Tabs>
       </div>
 

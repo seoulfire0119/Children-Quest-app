@@ -84,26 +84,33 @@ export default function CompletedQuestList() {
                   )}
                 </>
               )}
-              {q.proofUrl && (
+              {Array.isArray(q.proofUrls) && q.proofUrls.length > 0 && (
                 <>
-                  <h6 className="mt-3">내가 제출한 증빙 사진</h6>
-                  {/\.mp4|\.mov|\.webm|\.ogg$/i.test(q.proofUrl) ? (
-                    <video
-                      src={q.proofUrl}
-                      controls
-                      style={{ width: "100%", borderRadius: 6 }}
-                    />
-                  ) : (
-                    <img
-                      src={q.proofUrl}
-                      alt=""
-                      style={{ width: "100%", borderRadius: 6 }}
-                    />
-                  )}
+                  <h6 className="mt-3">내가 제출한 증빙 자료</h6>
+                  {q.proofUrls.map((url, idx) => (
+                    <div className="mb-2" key={idx}>
+                      {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
+                        <video
+                          src={url}
+                          controls
+                          style={{ width: "100%", borderRadius: 6 }}
+                        />
+                      ) : (
+                        <img
+                          src={url}
+                          alt=""
+                          style={{ width: "100%", borderRadius: 6 }}
+                        />
+                      )}
+                    </div>
+                  ))}
                 </>
               )}
               {typeof q.points === "number" && (
-                <p className="mt-2">획득 포인트: {q.points}점</p>
+                <p className="mt-2">
+                  획득 포인트:{" "}
+                  {q.points * (q.pointsAwardedCount || q.uploadCount || 0)}점
+                </p>
               )}
               <Button
                 variant="outline-secondary"

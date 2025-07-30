@@ -3,6 +3,7 @@ import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Container, Button, Tab, Tabs, Row, Col } from "react-bootstrap";
 import LinkParent from "./LinkParent";
+import pkg from "../../package.json";
 import QuestList from "./QuestList";
 import CompletedQuestList from "./CompletedQuestList";
 import RoutineList from "./RoutineList";
@@ -11,6 +12,8 @@ import ChildPoints from "./ChildPoints";
 import AfterSchoolSchedule from "./AfterSchoolSchedule";
 import DEFAULT_ROUTINE_USAGE from "./defaultRoutineUsage";
 import "../styles/PurchaseMarket.css";
+
+const APP_VERSION = pkg.version;
 
 export default function ChildDashboard() {
   /* ──────────────── 상태 ──────────────── */
@@ -41,6 +44,7 @@ export default function ChildDashboard() {
 
       const rqSnap = await getDoc(doc(db, "linkReq", auth.currentUser.uid));
       setReqExists(rqSnap.exists() && rqSnap.data().status === "pending");
+
       try {
         const routineSnap = await getDoc(
           doc(db, "routines", auth.currentUser.uid)
@@ -79,7 +83,7 @@ export default function ChildDashboard() {
         {/* 헤더 */}
         <Row className="align-items-center mb-3">
           <Col xs={8} sm={10}>
-            <h1 className="text-warning">👶 아이 대시보드</h1>
+            <h1 className="text-warning">👶 아이 대시보드 v{APP_VERSION}</h1>
           </Col>
           <Col xs={4} sm={2} className="text-end">
             <Button
@@ -97,8 +101,8 @@ export default function ChildDashboard() {
 
         {/* 사용자 정보 */}
         <Row>
-          <div className="section-card text-center mb-3">
-            <Col>
+          <Col>
+            <div className="section-card text-center mb-3">
               <p className="fs-5 fw-semibold">
                 <strong>{myName}</strong> ({auth.currentUser.email})
               </p>
@@ -106,14 +110,16 @@ export default function ChildDashboard() {
                 👨‍👩‍👧‍👦 <strong>내 부모님:</strong>{" "}
                 {parents.length ? parents.join(", ") : "연동 없음"}
               </p>
-            </Col>
-          </div>
+            </div>
+          </Col>
         </Row>
 
         {/* 포인트 */}
-        <Row className="ection-card text-center mb-3">
+        <Row className="mb-3">
           <Col>
-            <ChildPoints childUid={auth.currentUser.uid} />
+            <div className="section-card text-center">
+              <ChildPoints childUid={auth.currentUser.uid} />
+            </div>
           </Col>
         </Row>
 
@@ -123,9 +129,9 @@ export default function ChildDashboard() {
         {/* ────── 1. 포인트 마켓 배너형 탭 ────── */}
         <Tabs
           id="market-tab"
-          activeKey={showMarket ? "market" : null} /* 내용 토글 */
-          onSelect={() => setShowMarket((prev) => !prev)} /* 클릭 시 토글 */
-          className="mb-3 single-tab" /* 100% 폭 */
+          activeKey={showMarket ? "market" : "closed"}
+          onSelect={(key) => setShowMarket(key === "market")}
+          className="mb-3 single-tab"
         >
           <Tab
             eventKey="market"
@@ -155,6 +161,7 @@ export default function ChildDashboard() {
 
             <PurchaseMarket invOpen={invOpen} setInvOpen={setInvOpen} />
           </Tab>
+          <Tab eventKey="closed" title="🛒 포인트 마켓 (닫힘)" />
         </Tabs>
 
         {/* ────── 2. 퀘스트 & 루틴 탭 ────── */}

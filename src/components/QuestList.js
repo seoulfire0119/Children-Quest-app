@@ -7,6 +7,7 @@ import {
   updateDoc,
   doc,
   increment,
+  arrayUnion,
 } from "firebase/firestore";
 import { db, auth, storage } from "../firebase";
 import { Card, Button, Collapse, Form } from "react-bootstrap";
@@ -38,45 +39,41 @@ export default function QuestList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const completeQuest = async (quest) => {
-    if (processing[quest.id]) return;
+  const uploadProof = async (quest) => {
+    if (processing[quest.id] || !proofFiles[quest.id]) return;
     setProcessing((p) => ({ ...p, [quest.id]: true }));
 
     try {
-      let proofUrl = quest.proofUrl || "";
+      const file = proofFiles[quest.id];
+      const ext = file.name.split(".").pop() || "jpg";
+      const storageRef = ref(
+        storage,
+        `proofs/${auth.currentUser.uid}/${quest.id}-${Date.now()}.${ext}`
+      );
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
 
-      // 파일 업로드 처리
-      if (proofFiles[quest.id]) {
-        try {
-          const file = proofFiles[quest.id];
-          const ext = file.name.split(".").pop() || "jpg";
-          const storageRef = ref(
-            storage,
-            `proofs/${auth.currentUser.uid}/${quest.id}-${Date.now()}.${ext}`
-          );
-          await uploadBytes(storageRef, file);
-          proofUrl = await getDownloadURL(storageRef);
-        } catch (err) {
-          console.error("upload quest proof", err);
-        }
-      }
+      const newCount = (quest.uploadCount || 0) + 1;
 
-      // 퀘스트 완료 처리
       await updateDoc(doc(db, "quests", quest.id), {
-        completed: true,
+        proofUrls: arrayUnion(url),
+        uploadCount: increment(1),
         revisionRequested: false,
-        pointsAwarded: true,
-        ...(proofUrl ? { proofUrl } : {}),
+        ...(newCount >= 3 ? { completed: true } : {}),
       });
 
-      // 포인트 지급 처리
-      if (!quest.pointsAwarded && quest.points) {
+      if (quest.points) {
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
           points: increment(quest.points),
         });
+        await updateDoc(doc(db, "quests", quest.id), {
+          pointsAwardedCount: increment(1),
+        });
       }
+
+      setProofFiles((p) => ({ ...p, [quest.id]: null }));
     } catch (error) {
-      console.error("Quest completion error:", error);
+      console.error("Quest proof upload error:", error);
     } finally {
       setProcessing((p) => ({ ...p, [quest.id]: false }));
     }
@@ -112,23 +109,24 @@ export default function QuestList() {
                   />
                 ))}
               {typeof q.points === "number" && <p>포인트: {q.points}점</p>}
-              {q.proofUrl && (
-                <div className="mb-2">
-                  {/\.mp4|\.mov|\.webm|\.ogg$/i.test(q.proofUrl) ? (
-                    <video
-                      src={q.proofUrl}
-                      controls
-                      style={{ width: "100%", borderRadius: 6 }}
-                    />
-                  ) : (
-                    <img
-                      src={q.proofUrl}
-                      alt=""
-                      style={{ width: "100%", borderRadius: 6 }}
-                    />
-                  )}
-                </div>
-              )}
+              {Array.isArray(q.proofUrls) &&
+                q.proofUrls.map((url, idx) => (
+                  <div className="mb-2" key={idx}>
+                    {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
+                      <video
+                        src={url}
+                        controls
+                        style={{ width: "100%", borderRadius: 6 }}
+                      />
+                    ) : (
+                      <img
+                        src={url}
+                        alt=""
+                        style={{ width: "100%", borderRadius: 6 }}
+                      />
+                    )}
+                  </div>
+                ))}
               <Form.Label className="mb-1">증거물 업로드</Form.Label>
               <Form.Control
                 type="file"
@@ -140,10 +138,10 @@ export default function QuestList() {
               />
               <Button
                 variant="success"
-                disabled={processing[q.id]}
-                onClick={() => completeQuest(q)}
+                disabled={processing[q.id] || (q.uploadCount || 0) >= 3}
+                onClick={() => uploadProof(q)}
               >
-                완료
+                업로드
               </Button>
             </Card.Body>
           </Collapse>
