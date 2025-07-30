@@ -189,11 +189,11 @@ export default function ChildDashboard() {
               </Tab>
             )}
             {useFlags.optional && (
-              <Tab eventKey="optional" title="🎲 선택 퀘스트">
+              <Tab eventKey="optional" title="🎲 방학숙제">
                 <RoutineList session="optional" />
               </Tab>
             )}
-            <Tab eventKey="afterSchool" title="방과후">
+            <Tab eventKey="afterSchool" title="방과후 시간표">
               <AfterSchoolSchedule />
             </Tab>
           </Tabs>

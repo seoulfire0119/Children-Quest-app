@@ -128,7 +128,7 @@ export default function ParentDashboard() {
             <MarketAdmin />
           </Tab>
 
-          <Tab eventKey="afterSchool" title="방과후">
+          <Tab eventKey="afterSchool" title="방과후 시간표">
             {/* 이제 AfterSchoolSchedule 컴포넌트를 '수정 가능 모드'로 사용합니다. */}
             <AfterSchoolSchedule editable={true} />
           </Tab>
