@@ -12,7 +12,7 @@
 /* 2. 시간표 테이블 */
 .after-school-table {
   width: 100%;
-  min-width: 600px; /* 모바일에서 최소 너비 보장 */
+  min-width: 0;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
@@ -105,4 +105,23 @@
   .time-header-col .text {
     display: none;
   }
+  }
+
+/* 요일 선택 버튼 스타일 */
+.day-selector .day-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  margin: 0 4px;
+  padding: 0;
+  line-height: 45px;
+  border: 1px solid #ced4da;
+}
+.day-selector .day-btn.today {
+  background: #ff3b30;
+  color: #fff;
+}
+.day-selector .day-btn.active:not(.today) {
+  background: #0d6efd;
+  color: #fff;
 }
