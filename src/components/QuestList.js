@@ -8,6 +8,7 @@ import {
   doc,
   increment,
   arrayUnion,
+  deleteField,
 } from "firebase/firestore";
 import { db, auth, storage } from "../firebase";
 import { Card, Button, Collapse, Form } from "react-bootstrap";
@@ -18,6 +19,13 @@ export default function QuestList() {
   const [openQuest, setOpenQuest] = useState(null);
   const [proofFiles, setProofFiles] = useState({});
   const [processing, setProcessing] = useState({});
+
+  const getProofList = (q) => {
+    const arr = [];
+    if (q.proofUrl) arr.push(q.proofUrl);
+    if (Array.isArray(q.proofUrls)) arr.push(...q.proofUrls);
+    return arr;
+  };
 
   useEffect(() => {
     const uid = auth.currentUser?.uid;
@@ -53,14 +61,23 @@ export default function QuestList() {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
 
-      const newCount = (quest.uploadCount || 0) + 1;
+      const current = Number.isFinite(quest.uploadCount)
+        ? quest.uploadCount
+        : getProofList(quest).length;
+      const newCount = current + 1;
 
-      await updateDoc(doc(db, "quests", quest.id), {
-        proofUrls: arrayUnion(url),
-        uploadCount: increment(1),
+      const updates = {
+        proofUrls: quest.proofUrl
+          ? arrayUnion(quest.proofUrl, url)
+          : arrayUnion(url),
+        uploadCount: newCount,
         revisionRequested: false,
         ...(newCount >= 3 ? { completed: true } : {}),
-      });
+      };
+      if (quest.proofUrl) {
+        updates.proofUrl = deleteField();
+      }
+      await updateDoc(doc(db, "quests", quest.id), updates);
 
       if (quest.points) {
         await updateDoc(doc(db, "users", auth.currentUser.uid), {
@@ -109,24 +126,23 @@ export default function QuestList() {
                   />
                 ))}
               {typeof q.points === "number" && <p>포인트: {q.points}점</p>}
-              {Array.isArray(q.proofUrls) &&
-                q.proofUrls.map((url, idx) => (
-                  <div className="mb-2" key={idx}>
-                    {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
-                      <video
-                        src={url}
-                        controls
-                        style={{ width: "100%", borderRadius: 6 }}
-                      />
-                    ) : (
-                      <img
-                        src={url}
-                        alt=""
-                        style={{ width: "100%", borderRadius: 6 }}
-                      />
-                    )}
-                  </div>
-                ))}
+              {getProofList(q).map((url, idx) => (
+                <div className="mb-2" key={idx}>
+                  {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
+                    <video
+                      src={url}
+                      controls
+                      style={{ width: "100%", borderRadius: 6 }}
+                    />
+                  ) : (
+                    <img
+                      src={url}
+                      alt=""
+                      style={{ width: "100%", borderRadius: 6 }}
+                    />
+                  )}
+                </div>
+              ))}
               <Form.Label className="mb-1">증거물 업로드</Form.Label>
               <Form.Control
                 type="file"
@@ -138,7 +154,7 @@ export default function QuestList() {
               />
               <Button
                 variant="success"
-                disabled={processing[q.id] || (q.uploadCount || 0) >= 3}
+                disabled={processing[q.id] || getProofList(q).length >= 3}
                 onClick={() => uploadProof(q)}
               >
                 업로드

@@ -80,6 +80,7 @@ export default function RoutineList({ session }) {
   const [openId, setOpenId] = useState(null);
   const [proofFiles, setProofFiles] = useState({});
   const [processing, setProcessing] = useState({});
+  const [uploading, setUploading] = useState({});
   const today = getLocalDateKey();
   const docRef = uid && doc(db, "routines", uid, "daily", today);
 
@@ -99,7 +100,14 @@ export default function RoutineList({ session }) {
           if (exist) {
             data = { ...initialState, ...exist };
             if (!data.awardedSteps) data.awardedSteps = [];
-            if (!data.proofUrls) data.proofUrls = {};
+            if (!data.proofUrls) {
+              data.proofUrls = {};
+            } else {
+              Object.keys(data.proofUrls).forEach((k) => {
+                const v = data.proofUrls[k];
+                data.proofUrls[k] = Array.isArray(v) ? v : v ? [v] : [];
+              });
+            }
             if (JSON.stringify(exist) !== JSON.stringify(data)) {
               await updateDoc(docRef, {
                 [session]: data,
@@ -136,6 +144,35 @@ export default function RoutineList({ session }) {
     return () => (mounted = false);
   }, [uid, docRef, initialState, session, today]);
 
+  const uploadProof = async (idx) => {
+    if (!uid || uploading[idx] || !proofFiles[idx]) return;
+    setUploading((u) => ({ ...u, [idx]: true }));
+    try {
+      const file = proofFiles[idx];
+      const ext = file.name.split(".").pop() || "jpg";
+      const storageRef = ref(
+        storage,
+        `proofs/${uid}/routine-${session}-${today}-${idx}-${Date.now()}.${ext}`
+      );
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      const proofUrls = { ...(steps.proofUrls || {}) };
+      const arr = Array.isArray(proofUrls[idx]) ? [...proofUrls[idx]] : [];
+      arr.push(url);
+      proofUrls[idx] = arr.slice(0, 3);
+      const updated = { ...steps, proofUrls };
+      setSteps(updated);
+      await updateDoc(docRef, {
+        [`${session}.proofUrls`]: proofUrls,
+        updatedAt: Timestamp.now(),
+      });
+      setProofFiles((p) => ({ ...p, [idx]: null }));
+    } catch (err) {
+      console.error("upload proof", err);
+    } finally {
+      setUploading((u) => ({ ...u, [idx]: false }));
+    }
+  };
   /* toggle */
   const toggleStep = async (idx) => {
     if (!uid || processing[idx]) return;
@@ -153,20 +190,7 @@ export default function RoutineList({ session }) {
       );
 
       const proofUrls = { ...(steps.proofUrls || {}) };
-      if (newVal && proofFiles[idx]) {
-        const file = proofFiles[idx];
-        try {
-          const ext = file.name.split(".").pop() || "jpg";
-          const storageRef = ref(
-            storage,
-            `proofs/${uid}/routine-${session}-${today}-${idx}.${ext}`
-          );
-          await uploadBytes(storageRef, file);
-          proofUrls[idx] = await getDownloadURL(storageRef);
-        } catch (err) {
-          console.error("upload proof", err);
-        }
-      } else if (!newVal) {
+      if (!newVal) {
         delete proofUrls[idx];
       }
       updated.proofUrls = proofUrls;
@@ -226,7 +250,9 @@ export default function RoutineList({ session }) {
         const id = i + 1; // 1-based id
         const open = openId === id;
         const done = steps[id] || false;
-        const proofUrl = steps.proofUrls?.[id];
+        const proofList = Array.isArray(steps.proofUrls?.[id])
+          ? steps.proofUrls[id]
+          : [];
         return (
           <Card key={id} className="mb-2">
             <Card.Header
@@ -254,19 +280,19 @@ export default function RoutineList({ session }) {
             </Card.Header>
             <Collapse in={open}>
               <Card.Body>
-                {proofUrl && (
-                  <div className="mb-2">
-                    {/\.mp4|\.mov|\.webm|\.ogg$/i.test(proofUrl) ? (
+                {proofList.map((url, idx2) => (
+                  <div className="mb-2" key={idx2}>
+                    {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
                       <video
-                        src={proofUrl}
+                        src={url}
                         controls
                         style={{ width: "100%", borderRadius: 6 }}
                       />
                     ) : (
-                      <Image src={proofUrl} fluid rounded />
+                      <Image src={url} fluid rounded />
                     )}
                   </div>
-                )}
+                ))}
                 <Form.Label className="mb-1">증거물 업로드</Form.Label>
                 <Form.Control
                   type="file"
@@ -276,6 +302,14 @@ export default function RoutineList({ session }) {
                     setProofFiles({ ...proofFiles, [id]: e.target.files[0] })
                   }
                 />
+                <Button
+                  variant="success"
+                  className="me-2"
+                  disabled={uploading[id] || proofList.length >= 3}
+                  onClick={() => uploadProof(id)}
+                >
+                  업로드
+                </Button>
                 <Button
                   variant={done ? "secondary" : "success"}
                   disabled={processing[id]}

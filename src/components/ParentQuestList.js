@@ -15,6 +15,13 @@ import { Accordion, Button, Badge, Image } from "react-bootstrap";
 export default function ParentQuestList() {
   const [quests, setQuests] = useState([]);
 
+  const getProofList = (q) => {
+    const arr = [];
+    if (q.proofUrl) arr.push(q.proofUrl);
+    if (Array.isArray(q.proofUrls)) arr.push(...q.proofUrls);
+    return arr;
+  };
+
   useEffect(() => {
     const q = query(
       collection(db, "quests"),
@@ -81,10 +88,10 @@ export default function ParentQuestList() {
                   )}
                 </>
               )}
-              {Array.isArray(q.proofUrls) && q.proofUrls.length > 0 && (
+              {getProofList(q).length > 0 && (
                 <>
                   <h6>제출된 증빙 자료</h6>
-                  {q.proofUrls.map((url, idx) => (
+                  {getProofList(q).map((url, idx) => (
                     <div className="mb-2" key={idx}>
                       {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
                         <video

@@ -15,6 +15,13 @@ export default function CompletedQuestList() {
   const [quests, setQuests] = useState([]);
   const [openId, setOpenId] = useState(null);
 
+  const getProofList = (q) => {
+    const arr = [];
+    if (q.proofUrl) arr.push(q.proofUrl);
+    if (Array.isArray(q.proofUrls)) arr.push(...q.proofUrls);
+    return arr;
+  };
+
   useEffect(() => {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
@@ -84,10 +91,10 @@ export default function CompletedQuestList() {
                   )}
                 </>
               )}
-              {Array.isArray(q.proofUrls) && q.proofUrls.length > 0 && (
+              {getProofList(q).length > 0 && (
                 <>
                   <h6 className="mt-3">내가 제출한 증빙 자료</h6>
-                  {q.proofUrls.map((url, idx) => (
+                  {getProofList(q).map((url, idx) => (
                     <div className="mb-2" key={idx}>
                       {/\.mp4|\.mov|\.webm|\.ogg$/i.test(url) ? (
                         <video
